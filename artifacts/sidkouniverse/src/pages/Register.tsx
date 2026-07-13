@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { PageWrapper } from '@/components/layout/PageWrapper';
-import { auth, db } from '@/lib/firebase';
-import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
+import { db, isFirebaseConfigured } from '@/lib/firebase';
+import { getAuth, createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { Link, useLocation } from 'wouter';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
@@ -18,12 +18,21 @@ export default function Register() {
     e.preventDefault();
     if (!username.trim() || password.length < 6) return;
 
+    if (!isFirebaseConfigured) {
+      toast({
+        title: "Sign-up is not set up yet",
+        description: "Visitor accounts aren't available yet.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsLoading(true);
     try {
       const cleanUsername = username.toLowerCase().replace(/[^a-z0-9]/g, '');
       const email = `${cleanUsername}@sidkouniverse.local`;
 
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const userCredential = await createUserWithEmailAndPassword(getAuth(), email, password);
       
       await updateProfile(userCredential.user, {
         displayName: cleanUsername

@@ -4,10 +4,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Home, Image as ImageIcon, BookOpen, Newspaper, MapPin, Target,
   Trophy, User, MessageCircle, MessageSquare, Users, BookMarked,
-  X, GraduationCap, LayoutDashboard
+  X, GraduationCap, LayoutDashboard, LogOut
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
+import { useQueryClient } from '@tanstack/react-query';
+import { useLogoutAdmin, getGetAdminSessionQueryKey } from '@workspace/api-client-react';
 import { SidLogoIcon, SidWordmark } from './SidLogo';
 
 const navItems = [
@@ -31,8 +33,20 @@ interface MobileDrawerProps {
 }
 
 export function MobileDrawer({ open, onClose }: MobileDrawerProps) {
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
   const { isAdmin } = useAuth();
+  const queryClient = useQueryClient();
+  const logoutAdminMutation = useLogoutAdmin();
+
+  const handleAdminLogout = () => {
+    logoutAdminMutation.mutate(undefined, {
+      onSuccess: async () => {
+        await queryClient.invalidateQueries({ queryKey: getGetAdminSessionQueryKey() });
+        onClose();
+        setLocation('/');
+      },
+    });
+  };
 
   return (
     <AnimatePresence>
@@ -125,6 +139,18 @@ export function MobileDrawer({ open, onClose }: MobileDrawerProps) {
                 )}
               </div>
             </div>
+
+            {isAdmin && (
+              <div className="px-3 pb-3">
+                <button
+                  onClick={handleAdminLogout}
+                  className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl border border-border/50 text-sm font-medium text-muted-foreground active:bg-destructive/10 active:text-destructive transition-colors"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Log out of admin
+                </button>
+              </div>
+            )}
           </motion.div>
         </>
       )}

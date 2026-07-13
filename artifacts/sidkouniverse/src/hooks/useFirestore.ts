@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { collection, query, limit, onSnapshot, getDocs } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { db, isFirebaseConfigured } from '@/lib/firebase';
 
 export function useFirestore<T>(collectionName: string, queryConstraints: any[] = []) {
   const [data, setData] = useState<T[]>([]);
@@ -8,6 +8,13 @@ export function useFirestore<T>(collectionName: string, queryConstraints: any[] 
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
+    if (!isFirebaseConfigured || !db) {
+      setData([]);
+      setLoading(false);
+      setError(new Error('Firebase is not configured.'));
+      return;
+    }
+
     const q = query(collection(db, collectionName), ...queryConstraints);
     const unsubscribe = onSnapshot(q, 
       (snapshot) => {

@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { PageWrapper } from '@/components/layout/PageWrapper';
-import { auth, db } from '@/lib/firebase';
-import { signInWithEmailAndPassword } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { isFirebaseConfigured } from '@/lib/firebase';
+import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
 import { Link, useLocation } from 'wouter';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
@@ -18,10 +17,19 @@ export default function Login() {
     e.preventDefault();
     if (!username.trim() || !password) return;
 
+    if (!isFirebaseConfigured) {
+      toast({
+        title: "Sign-in is not set up yet",
+        description: "Visitor accounts aren't available yet.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsLoading(true);
     try {
       const email = `${username.toLowerCase().trim()}@sidkouniverse.local`;
-      await signInWithEmailAndPassword(auth, email, password);
+      await signInWithEmailAndPassword(getAuth(), email, password);
       toast({ title: "Welcome back!" });
       setLocation('/');
     } catch (error: any) {

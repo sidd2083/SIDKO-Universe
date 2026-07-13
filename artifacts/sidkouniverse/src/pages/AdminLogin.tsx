@@ -1,21 +1,19 @@
-import React, { useState, useEffect } from 'react';
-import { auth } from '@/lib/firebase';
-import {
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-} from 'firebase/auth';
+import React, { useEffect, useState } from 'react';
 import { useLocation } from 'wouter';
-import { useAuth } from '@/contexts/AuthContext';
+import { useQueryClient } from '@tanstack/react-query';
 import { Loader2, Lock } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useAuth } from '@/contexts/AuthContext';
+import { useLoginAdmin, getGetAdminSessionQueryKey } from '@workspace/api-client-react';
 
 export default function AdminLogin() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [, setLocation] = useLocation();
   const { isAdmin, isLoading: authLoading } = useAuth();
+  const queryClient = useQueryClient();
+  const loginMutation = useLoginAdmin();
 
   useEffect(() => {
     if (!authLoading && isAdmin) {
@@ -28,44 +26,25 @@ export default function AdminLogin() {
     setError('');
     if (!username.trim() || !password) return;
 
-    setIsLoading(true);
-    const email = `${username.toLowerCase().trim()}@sidkouniverse.local`;
-
-    try {
-      // Try signing in first
-      await signInWithEmailAndPassword(auth, email, password);
-      setLocation('/dashboard');
-    } catch (err: any) {
-      const code = err?.code ?? '';
-
-      if (code === 'auth/user-not-found' || code === 'auth/invalid-credential') {
-        // First time setup: auto-create the account
-        try {
-          await createUserWithEmailAndPassword(auth, email, password);
+    loginMutation.mutate(
+      { data: { username: username.trim(), password } },
+      {
+        onSuccess: async () => {
+          await queryClient.invalidateQueries({ queryKey: getGetAdminSessionQueryKey() });
           setLocation('/dashboard');
-        } catch (createErr: any) {
-          const cc = createErr?.code ?? '';
-          if (cc === 'auth/email-already-in-use') {
-            setError('Wrong password.');
-          } else if (cc === 'auth/operation-not-allowed') {
-            setError('Email/Password sign-in is not enabled in Firebase Console → Authentication → Sign-in method.');
+        },
+        onError: (err: any) => {
+          if (err?.status === 401) {
+            setError('Wrong username or password.');
           } else {
-            setError('Access denied. Check Firebase Auth is enabled.');
+            setError('Access denied.');
           }
-        }
-      } else if (code === 'auth/wrong-password' || code === 'auth/invalid-login-credentials') {
-        setError('Wrong password.');
-      } else if (code === 'auth/operation-not-allowed') {
-        setError('Enable Email/Password in Firebase Console → Authentication → Sign-in method.');
-      } else if (code === 'auth/network-request-failed') {
-        setError('Network error. Check your connection.');
-      } else {
-        setError('Access denied.');
-      }
-    } finally {
-      setIsLoading(false);
-    }
+        },
+      },
+    );
   };
+
+  const isLoading = loginMutation.isPending;
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">

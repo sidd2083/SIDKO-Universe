@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useRef, useEffect } from 'react';
 import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { db, isFirebaseConfigured } from '@/lib/firebase';
 
 interface Track {
   id: string;
@@ -38,6 +38,7 @@ export const MusicProvider = ({ children }: { children: React.ReactNode }) => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
+    if (!isFirebaseConfigured || !db) return;
     const q = query(collection(db, 'music'), orderBy('order', 'asc'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const loadedTracks = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Track));

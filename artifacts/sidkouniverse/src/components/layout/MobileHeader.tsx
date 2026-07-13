@@ -2,9 +2,6 @@ import React, { useState } from 'react';
 import { useTheme } from 'next-themes';
 import { Sun, Moon, Menu } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
-import { useAuth } from '@/contexts/AuthContext';
-import { auth } from '@/lib/firebase';
-import { signOut } from 'firebase/auth';
 import { SidLogoIcon, SidWordmark } from './SidLogo';
 import { MobileDrawer } from './MobileDrawer';
 
@@ -35,7 +32,6 @@ function getTitle(location: string): string | null {
 
 export function MobileHeader() {
   const { theme, setTheme } = useTheme();
-  const { user } = useAuth();
   const [location] = useLocation();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const pageTitle = getTitle(location);

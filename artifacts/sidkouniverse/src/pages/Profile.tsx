@@ -1,8 +1,8 @@
 import React from 'react';
 import { PageWrapper } from '@/components/layout/PageWrapper';
 import { useAuth } from '@/contexts/AuthContext';
-import { auth } from '@/lib/firebase';
-import { signOut } from 'firebase/auth';
+import { isFirebaseConfigured } from '@/lib/firebase';
+import { getAuth, signOut } from 'firebase/auth';
 import { useLocation } from 'wouter';
 
 export default function Profile() {
@@ -15,7 +15,9 @@ export default function Profile() {
   }
 
   const handleLogout = async () => {
-    await signOut(auth);
+    if (isFirebaseConfigured) {
+      await signOut(getAuth());
+    }
     setLocation('/');
   };
 

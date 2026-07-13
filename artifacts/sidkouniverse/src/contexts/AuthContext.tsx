@@ -1,9 +1,13 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, onAuthStateChanged } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { getAuth } from 'firebase/auth';
+import { isFirebaseConfigured } from '@/lib/firebase';
+import { useGetAdminSession } from '@workspace/api-client-react';
 
 interface AuthContextType {
+  /** Regular site-visitor account (Firebase Auth), independent of admin. */
   user: User | null;
+  /** Admin session, backed by the API server (siddhant login at /balen). */
   isAdmin: boolean;
   isLoading: boolean;
 }
@@ -16,18 +20,26 @@ const AuthContext = createContext<AuthContextType>({
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [userLoading, setUserLoading] = useState(isFirebaseConfigured);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    if (!isFirebaseConfigured) {
+      setUserLoading(false);
+      return;
+    }
+    const unsubscribe = onAuthStateChanged(getAuth(), (currentUser) => {
       setUser(currentUser);
-      setIsLoading(false);
+      setUserLoading(false);
     });
     return () => unsubscribe();
   }, []);
 
-  const adminUid = import.meta.env.VITE_ADMIN_UID;
-  const isAdmin = !!user && user.uid === adminUid;
+  const { data: session, isLoading: sessionLoading } = useGetAdminSession({
+    query: { staleTime: 60_000 },
+  });
+
+  const isAdmin = Boolean(session?.isAdmin);
+  const isLoading = userLoading || sessionLoading;
 
   return (
     <AuthContext.Provider value={{ user, isAdmin, isLoading }}>

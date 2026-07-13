@@ -8,9 +8,11 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
-import { auth } from '@/lib/firebase';
-import { signOut } from 'firebase/auth';
+import { isFirebaseConfigured } from '@/lib/firebase';
+import { getAuth, signOut } from 'firebase/auth';
 import { useTheme } from 'next-themes';
+import { useQueryClient } from '@tanstack/react-query';
+import { useLogoutAdmin, getGetAdminSessionQueryKey } from '@workspace/api-client-react';
 import { SidLogoIcon, SidWordmark } from './SidLogo';
 
 const navItems = [
@@ -29,12 +31,26 @@ const navItems = [
 ];
 
 export function Sidebar() {
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
   const { user, isAdmin } = useAuth();
   const { theme, setTheme } = useTheme();
+  const queryClient = useQueryClient();
+  const logoutAdminMutation = useLogoutAdmin();
 
   const handleLogout = async () => {
-    await signOut(auth);
+    if (isFirebaseConfigured) {
+      await signOut(getAuth());
+    }
+    setLocation('/');
+  };
+
+  const handleAdminLogout = () => {
+    logoutAdminMutation.mutate(undefined, {
+      onSuccess: async () => {
+        await queryClient.invalidateQueries({ queryKey: getGetAdminSessionQueryKey() });
+        setLocation('/');
+      },
+    });
   };
 
   return (
@@ -99,7 +115,27 @@ export function Sidebar() {
           )}
         </button>
 
-        {/* User */}
+        {/* Admin session (independent of visitor account) */}
+        {isAdmin && (
+          <div className="flex items-center gap-3 px-3 py-2 rounded-xl bg-primary/5">
+            <div className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold text-primary shrink-0">
+              S
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-semibold truncate">Siddhant</p>
+              <p className="text-[10px] text-muted-foreground">⚡ Admin</p>
+            </div>
+            <button
+              onClick={handleAdminLogout}
+              aria-label="Log out of admin"
+              className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
+
+        {/* Visitor account */}
         {user ? (
           <div className="space-y-1">
             <Link href="/profile">
@@ -111,7 +147,7 @@ export function Sidebar() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-semibold truncate">{user.displayName || user.email?.split('@')[0]}</p>
-                  <p className="text-[10px] text-muted-foreground">{isAdmin ? '⚡ Admin' : 'User'}</p>
+                  <p className="text-[10px] text-muted-foreground">User</p>
                 </div>
               </span>
             </Link>
@@ -123,13 +159,13 @@ export function Sidebar() {
               Log out
             </button>
           </div>
-        ) : (
+        ) : !isAdmin ? (
           <Link href="/login">
             <span className="flex items-center justify-center w-full bg-primary text-primary-foreground py-2.5 px-4 rounded-xl text-sm font-semibold hover:brightness-110 transition-all cursor-pointer shadow-sm shadow-primary/20">
               Sign In
             </span>
           </Link>
-        )}
+        ) : null}
       </div>
     </aside>
   );
