@@ -34,9 +34,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return () => unsubscribe();
   }, []);
 
-  const { data: session, isLoading: sessionLoading } = useGetAdminSession({
-    query: { staleTime: 60_000 },
-  });
+  const { data: session, isLoading: sessionLoading } = useGetAdminSession();
 
   const isAdmin = Boolean(session?.isAdmin);
   const isLoading = userLoading || sessionLoading;

@@ -9,7 +9,7 @@ import { Link } from 'wouter';
 import { ArrowRight, Github, ExternalLink, Activity } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { doc, onSnapshot, orderBy, limit } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { db, isFirebaseConfigured } from '@/lib/firebase';
 
 export default function Home() {
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -26,6 +26,7 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    if (!isFirebaseConfigured || !db) return;
     const unsubscribe = onSnapshot(doc(db, 'settings', 'main'), (doc) => {
       if (doc.exists()) {
         setSettings(doc.data());
