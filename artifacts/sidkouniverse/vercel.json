@@ -1,0 +1,6 @@
+{
+  "framework": null,
+  "buildCommand": "pnpm install && pnpm --filter @workspace/sidkouniverse run build:vercel",
+  "outputDirectory": "artifacts/sidkouniverse/dist/public",
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+}

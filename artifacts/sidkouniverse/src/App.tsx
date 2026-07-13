@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { Route, Switch, Router as WouterRouter } from 'wouter';
+import { ThemeProvider } from 'next-themes';
 
 import { Layout } from '@/components/layout/Layout';
 import { AuthProvider } from '@/contexts/AuthContext';
@@ -24,7 +25,11 @@ import Login from '@/pages/Login';
 import Register from '@/pages/Register';
 import Profile from '@/pages/Profile';
 import Messages from '@/pages/Messages';
+import Timeline from '@/pages/Timeline';
 import NotFound from '@/pages/not-found';
+
+// Admin secret entry
+import AdminLogin from '@/pages/AdminLogin';
 
 // Admin Pages
 import Dashboard from '@/pages/dashboard/Dashboard';
@@ -36,64 +41,77 @@ import AnonymousCenter from '@/pages/dashboard/AnonymousCenter';
 import MusicManager from '@/pages/dashboard/MusicManager';
 import Settings from '@/pages/dashboard/Settings';
 import Journal from '@/pages/dashboard/Journal';
+import TimelineManager from '@/pages/dashboard/TimelineManager';
 
 const queryClient = new QueryClient();
 
 function Router() {
   return (
-    <Layout>
-      <Switch>
-        {/* Public Routes */}
-        <Route path="/" component={Home} />
-        <Route path="/memories" component={Memories} />
-        <Route path="/memories/:id" component={MemoryDetail} />
-        <Route path="/thoughts" component={Thoughts} />
-        <Route path="/thoughts/:id" component={ThoughtDetail} />
-        <Route path="/blog" component={Blog} />
-        <Route path="/blog/:slug" component={BlogPost} />
-        <Route path="/about" component={About} />
-        <Route path="/goals" component={Goals} />
-        <Route path="/achievements" component={Achievements} />
-        <Route path="/anonymous" component={Anonymous} />
-        <Route path="/guestbook" component={Guestbook} />
-        
-        {/* Auth & User */}
-        <Route path="/login" component={Login} />
-        <Route path="/register" component={Register} />
-        <Route path="/profile" component={Profile} />
-        <Route path="/messages" component={Messages} />
+    <Switch>
+      {/* Secret admin entry — no layout wrapper */}
+      <Route path="/balen" component={AdminLogin} />
 
-        {/* Admin Dashboard */}
-        <Route path="/dashboard" component={Dashboard} />
-        <Route path="/dashboard/memories" component={MemoryManager} />
-        <Route path="/dashboard/thoughts" component={ThoughtEditor} />
-        <Route path="/dashboard/blog" component={BlogEditor} />
-        <Route path="/dashboard/goals" component={GoalManager} />
-        <Route path="/dashboard/anonymous" component={AnonymousCenter} />
-        <Route path="/dashboard/music" component={MusicManager} />
-        <Route path="/dashboard/settings" component={Settings} />
-        <Route path="/dashboard/journal" component={Journal} />
+      {/* All other routes use the main layout */}
+      <Route>
+        <Layout>
+          <Switch>
+            {/* Public Routes */}
+            <Route path="/" component={Home} />
+            <Route path="/memories" component={Memories} />
+            <Route path="/memories/:id" component={MemoryDetail} />
+            <Route path="/thoughts" component={Thoughts} />
+            <Route path="/thoughts/:id" component={ThoughtDetail} />
+            <Route path="/blog" component={Blog} />
+            <Route path="/blog/:slug" component={BlogPost} />
+            <Route path="/about" component={About} />
+            <Route path="/goals" component={Goals} />
+            <Route path="/achievements" component={Achievements} />
+            <Route path="/anonymous" component={Anonymous} />
+            <Route path="/guestbook" component={Guestbook} />
+            <Route path="/timeline" component={Timeline} />
 
-        <Route component={NotFound} />
-      </Switch>
-    </Layout>
+            {/* Auth & User */}
+            <Route path="/login" component={Login} />
+            <Route path="/register" component={Register} />
+            <Route path="/profile" component={Profile} />
+            <Route path="/messages" component={Messages} />
+
+            {/* Admin Dashboard */}
+            <Route path="/dashboard" component={Dashboard} />
+            <Route path="/dashboard/memories" component={MemoryManager} />
+            <Route path="/dashboard/thoughts" component={ThoughtEditor} />
+            <Route path="/dashboard/blog" component={BlogEditor} />
+            <Route path="/dashboard/goals" component={GoalManager} />
+            <Route path="/dashboard/anonymous" component={AnonymousCenter} />
+            <Route path="/dashboard/music" component={MusicManager} />
+            <Route path="/dashboard/settings" component={Settings} />
+            <Route path="/dashboard/journal" component={Journal} />
+            <Route path="/dashboard/timeline" component={TimelineManager} />
+
+            <Route component={NotFound} />
+          </Switch>
+        </Layout>
+      </Route>
+    </Switch>
   );
 }
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <AuthProvider>
-          <MusicProvider>
-            <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
-              <Router />
-            </WouterRouter>
-          </MusicProvider>
-        </AuthProvider>
-        <Toaster />
-      </TooltipProvider>
-    </QueryClientProvider>
+    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <AuthProvider>
+            <MusicProvider>
+              <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
+                <Router />
+              </WouterRouter>
+            </MusicProvider>
+          </AuthProvider>
+          <Toaster />
+        </TooltipProvider>
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 }
 
