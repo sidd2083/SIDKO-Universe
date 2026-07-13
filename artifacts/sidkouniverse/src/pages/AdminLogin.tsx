@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { auth } from '@/lib/firebase';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import {
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+} from 'firebase/auth';
 import { useLocation } from 'wouter';
 import { useAuth } from '@/contexts/AuthContext';
 import { Loader2, Lock } from 'lucide-react';
@@ -26,12 +29,39 @@ export default function AdminLogin() {
     if (!username.trim() || !password) return;
 
     setIsLoading(true);
+    const email = `${username.toLowerCase().trim()}@sidkouniverse.local`;
+
     try {
-      const email = `${username.toLowerCase().trim()}@sidkouniverse.local`;
+      // Try signing in first
       await signInWithEmailAndPassword(auth, email, password);
       setLocation('/dashboard');
     } catch (err: any) {
-      setError('Access denied.');
+      const code = err?.code ?? '';
+
+      if (code === 'auth/user-not-found' || code === 'auth/invalid-credential') {
+        // First time setup: auto-create the account
+        try {
+          await createUserWithEmailAndPassword(auth, email, password);
+          setLocation('/dashboard');
+        } catch (createErr: any) {
+          const cc = createErr?.code ?? '';
+          if (cc === 'auth/email-already-in-use') {
+            setError('Wrong password.');
+          } else if (cc === 'auth/operation-not-allowed') {
+            setError('Email/Password sign-in is not enabled in Firebase Console → Authentication → Sign-in method.');
+          } else {
+            setError('Access denied. Check Firebase Auth is enabled.');
+          }
+        }
+      } else if (code === 'auth/wrong-password' || code === 'auth/invalid-login-credentials') {
+        setError('Wrong password.');
+      } else if (code === 'auth/operation-not-allowed') {
+        setError('Enable Email/Password in Firebase Console → Authentication → Sign-in method.');
+      } else if (code === 'auth/network-request-failed') {
+        setError('Network error. Check your connection.');
+      } else {
+        setError('Access denied.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -59,6 +89,7 @@ export default function AdminLogin() {
             onChange={(e) => setUsername(e.target.value)}
             placeholder="Username"
             autoComplete="off"
+            autoCapitalize="none"
             className="w-full bg-card border border-border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/40 text-foreground placeholder:text-muted-foreground/50 text-sm"
             required
           />
@@ -67,11 +98,12 @@ export default function AdminLogin() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Password"
+            autoComplete="current-password"
             className="w-full bg-card border border-border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/40 text-foreground placeholder:text-muted-foreground/50 text-sm"
             required
           />
           {error && (
-            <p className="text-xs text-destructive text-center">{error}</p>
+            <p className="text-xs text-destructive text-center leading-relaxed">{error}</p>
           )}
           <button
             type="submit"

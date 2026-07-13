@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import {
   Home, Image as ImageIcon, BookOpen, PenTool, User,
   Target, Award, MessageSquare, MessageCircle,
-  LogOut, MapPin, Clock, Sun, Moon, LayoutDashboard,
+  LogOut, MapPin, Clock, Sun, Moon, LayoutDashboard, GraduationCap, Users,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
@@ -14,17 +14,18 @@ import { useTheme } from 'next-themes';
 import { SidLogoIcon, SidWordmark } from './SidLogo';
 
 const navItems = [
-  { label: 'Home', path: '/', icon: Home },
-  { label: 'Memories', path: '/memories', icon: ImageIcon },
-  { label: 'Thoughts', path: '/thoughts', icon: BookOpen },
-  { label: 'Blog', path: '/blog', icon: PenTool },
-  { label: 'Timeline', path: '/timeline', icon: Clock },
-  { label: 'Goals', path: '/goals', icon: Target },
-  { label: 'Achievements', path: '/achievements', icon: Award },
-  { label: 'About', path: '/about', icon: User },
-  { label: 'Anonymous', path: '/anonymous', icon: MessageSquare },
-  { label: 'Messages', path: '/messages', icon: MessageCircle },
-  { label: 'Guestbook', path: '/guestbook', icon: MapPin },
+  { label: 'Home',         path: '/',            icon: Home },
+  { label: 'Memories',     path: '/memories',    icon: ImageIcon },
+  { label: 'Thoughts',     path: '/thoughts',    icon: BookOpen },
+  { label: 'Blog',         path: '/blog',        icon: PenTool },
+  { label: 'Timeline',     path: '/timeline',    icon: Clock },
+  { label: 'Goals',        path: '/goals',       icon: Target },
+  { label: 'Achievements', path: '/achievements',icon: Award },
+  { label: 'Learning',     path: '/learning',    icon: GraduationCap },
+  { label: 'About',        path: '/about',       icon: User },
+  { label: 'NGL',          path: '/anonymous',   icon: MessageSquare },
+  { label: 'Messages',     path: '/messages',    icon: MessageCircle },
+  { label: 'Guestbook',    path: '/guestbook',   icon: Users },
 ];
 
 export function Sidebar() {

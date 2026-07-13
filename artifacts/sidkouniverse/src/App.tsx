@@ -26,6 +26,7 @@ import Register from '@/pages/Register';
 import Profile from '@/pages/Profile';
 import Messages from '@/pages/Messages';
 import Timeline from '@/pages/Timeline';
+import Learning from '@/pages/Learning';
 import NotFound from '@/pages/not-found';
 
 // Admin secret entry
@@ -69,6 +70,7 @@ function Router() {
             <Route path="/anonymous" component={Anonymous} />
             <Route path="/guestbook" component={Guestbook} />
             <Route path="/timeline" component={Timeline} />
+            <Route path="/learning" component={Learning} />
 
             {/* Auth & User */}
             <Route path="/login" component={Login} />
