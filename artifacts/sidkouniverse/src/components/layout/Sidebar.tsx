@@ -3,7 +3,7 @@ import { Link, useLocation } from 'wouter';
 import { motion } from 'framer-motion';
 import {
   Home, Image as ImageIcon, BookOpen, PenTool, User,
-  Target, Award, MessageSquare, MessageCircle, Settings,
+  Target, Award, MessageSquare, MessageCircle,
   LogOut, MapPin, Clock, Sun, Moon, LayoutDashboard,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils';
 import { auth } from '@/lib/firebase';
 import { signOut } from 'firebase/auth';
 import { useTheme } from 'next-themes';
+import { SidLogoIcon, SidWordmark } from './SidLogo';
 
 const navItems = [
   { label: 'Home', path: '/', icon: Home },
@@ -39,12 +40,10 @@ export function Sidebar() {
     <aside className="hidden md:flex flex-col w-64 h-screen fixed top-0 left-0 border-r border-border bg-sidebar z-40">
       {/* Logo */}
       <div className="flex items-center gap-3 px-5 py-5 border-b border-border">
-        <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center text-primary-foreground font-black text-base shadow-sm shadow-primary/30">
-          S
-        </div>
-        <div>
-          <span className="font-bold text-sm tracking-tight">SidkoUniverse</span>
-          <p className="text-[10px] text-muted-foreground leading-none mt-0.5">Siddhant's digital life</p>
+        <SidLogoIcon size="md" />
+        <div className="flex flex-col gap-0.5">
+          <SidWordmark className="text-sm" />
+          <p className="text-[10px] text-muted-foreground leading-none">Siddhant's digital life</p>
         </div>
       </div>
 
