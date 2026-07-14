@@ -2,8 +2,19 @@ import express, { type Express } from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import pinoHttp from "pino-http";
-import router from "./routes";
-import { logger } from "./lib/logger";
+import path from "path";
+import fs from "fs";
+import router from "./routes/index.js";
+import { logger } from "./lib/logger.js";
+
+// Ensure uploads directory exists on startup
+const UPLOADS_DIR =
+  process.env.VERCEL === "1"
+    ? "/tmp/uploads"
+    : path.resolve(process.cwd(), "uploads");
+if (!fs.existsSync(UPLOADS_DIR)) {
+  fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+}
 
 const app: Express = express();
 
@@ -30,6 +41,9 @@ app.use(cors());
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Serve uploaded files statically under /api/uploads
+app.use("/api/uploads", express.static(UPLOADS_DIR));
 
 app.use("/api", router);
 

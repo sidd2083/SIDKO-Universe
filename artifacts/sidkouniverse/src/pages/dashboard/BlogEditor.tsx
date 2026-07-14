@@ -2,12 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { PageWrapper } from '@/components/layout/PageWrapper';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLocation } from 'wouter';
-import { db, storage } from '@/lib/firebase';
+import { db, isFirebaseConfigured } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp, deleteDoc, doc, updateDoc, orderBy } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useFirestore } from '@/hooks/useFirestore';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Plus, Trash2, Globe, Image as ImageIcon } from 'lucide-react';
+import { uploadFile } from '@/lib/apiUpload';
+import { Loader2, Globe, Image as ImageIcon } from 'lucide-react';
 import { format } from 'date-fns';
 
 export default function BlogEditor() {
@@ -24,13 +24,10 @@ export default function BlogEditor() {
   const [readingTime, setReadingTime] = useState(5);
   const [file, setFile] = useState<File | null>(null);
   const [coverUrl, setCoverUrl] = useState('');
-  
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    if (!isLoading && !isAdmin) {
-      setLocation('/');
-    }
+    if (!isLoading && !isAdmin) setLocation('/');
   }, [isAdmin, isLoading, setLocation]);
 
   if (isLoading || !isAdmin) return null;
@@ -41,18 +38,20 @@ export default function BlogEditor() {
     setSlug(newTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, ''));
   };
 
-  const handleSave = async (e: React.FormEvent, published: boolean) => {
+  const handleSave = async (e: React.MouseEvent, published: boolean) => {
     e.preventDefault();
     if (!title || !content || !slug) return;
+    if (!isFirebaseConfigured) {
+      toast({ title: 'Firebase is not configured — blog posts cannot be saved yet.', variant: 'destructive' });
+      return;
+    }
 
     setIsSaving(true);
     try {
       let finalCoverUrl = coverUrl;
-      
+
       if (file) {
-        const storageRef = ref(storage, `blog/${Date.now()}_${file.name}`);
-        await uploadBytes(storageRef, file);
-        finalCoverUrl = await getDownloadURL(storageRef);
+        finalCoverUrl = await uploadFile(file);
       }
 
       await addDoc(collection(db, 'blogs'), {
@@ -63,18 +62,14 @@ export default function BlogEditor() {
         coverImage: finalCoverUrl,
         readingTime: Number(readingTime),
         published,
-        createdAt: serverTimestamp()
+        createdAt: serverTimestamp(),
       });
 
-      setTitle('');
-      setSlug('');
-      setContent('');
-      setExcerpt('');
-      setFile(null);
-      setCoverUrl('');
+      setTitle(''); setSlug(''); setContent(''); setExcerpt('');
+      setFile(null); setCoverUrl('');
       toast({ title: published ? 'Article published!' : 'Draft saved' });
-    } catch (err) {
-      toast({ title: 'Failed to save article', variant: 'destructive' });
+    } catch (err: any) {
+      toast({ title: err?.message ?? 'Failed to save article', variant: 'destructive' });
     } finally {
       setIsSaving(false);
     }
@@ -85,7 +80,7 @@ export default function BlogEditor() {
     try {
       await deleteDoc(doc(db, 'blogs', id));
       toast({ title: 'Article deleted' });
-    } catch (err) {
+    } catch {
       toast({ title: 'Failed to delete article', variant: 'destructive' });
     }
   };
@@ -94,7 +89,7 @@ export default function BlogEditor() {
     try {
       await updateDoc(doc(db, 'blogs', id), { published: !currentlyPublished });
       toast({ title: currentlyPublished ? 'Unpublished' : 'Published' });
-    } catch (err) {
+    } catch {
       toast({ title: 'Failed to update status', variant: 'destructive' });
     }
   };
@@ -103,6 +98,12 @@ export default function BlogEditor() {
     <PageWrapper>
       <div className="max-w-6xl mx-auto py-8">
         <h1 className="text-3xl font-bold mb-8">Blog Editor</h1>
+
+        {!isFirebaseConfigured && (
+          <div className="mb-6 px-4 py-3 rounded-xl bg-yellow-500/10 border border-yellow-500/30 text-yellow-600 dark:text-yellow-400 text-sm">
+            ⚠️ Firebase is not connected — articles won't be saved until you configure Firebase in Settings.
+          </div>
+        )}
 
         <div className="grid lg:grid-cols-2 gap-8">
           <div>
@@ -146,19 +147,23 @@ export default function BlogEditor() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-muted-foreground mb-1">Cover Image</label>
+                  <label className="block text-xs font-medium text-muted-foreground mb-1">
+                    Cover Image <span className="text-primary font-normal">(upload directly — no Firebase needed)</span>
+                  </label>
                   <input
                     type="file"
                     accept="image/*"
                     onChange={e => setFile(e.target.files?.[0] || null)}
                     className="w-full bg-background border border-border rounded-xl px-3 py-2 text-sm file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-medium file:bg-primary/10 file:text-primary hover:file:bg-primary/20 cursor-pointer"
                   />
+                  {file && (
+                    <p className="text-xs text-muted-foreground mt-1">Selected: {file.name}</p>
+                  )}
                 </div>
               </div>
 
               <textarea
-                placeholder="Write your article here... (Markdown supported) 
-Use # for H1, ## for H2. Leave blank lines between paragraphs."
+                placeholder="Write your article here... (Markdown supported)"
                 value={content}
                 onChange={e => setContent(e.target.value)}
                 className="w-full flex-1 bg-transparent border-none resize-none focus:outline-none text-foreground leading-relaxed custom-scrollbar mb-4 mt-2 border-t border-border/50 pt-4"
@@ -191,7 +196,7 @@ Use # for H1, ## for H2. Leave blank lines between paragraphs."
             <div className="bg-card border border-border rounded-3xl p-6 shadow-sm h-[80vh] flex flex-col">
               <h2 className="font-bold mb-6 text-xl">All Articles</h2>
               <div className="space-y-4 overflow-y-auto flex-1 custom-scrollbar pr-2">
-                {blogs?.map(blog => (
+                {blogs?.map((blog: any) => (
                   <div key={blog.id} className="bg-background border border-border rounded-2xl p-4 flex flex-col">
                     <div className="flex gap-4">
                       {blog.coverImage ? (
@@ -206,7 +211,7 @@ Use # for H1, ## for H2. Leave blank lines between paragraphs."
                       <div className="flex-1 min-w-0">
                         <div className="flex justify-between items-start mb-1">
                           <h3 className="font-bold truncate text-sm">{blog.title}</h3>
-                          <span className={`shrink-0 ml-2 text-[10px] uppercase font-bold px-2 py-0.5 rounded ${blog.published ? 'bg-success/20 text-success' : 'bg-muted text-muted-foreground'}`}>
+                          <span className={`shrink-0 ml-2 text-[10px] uppercase font-bold px-2 py-0.5 rounded ${blog.published ? 'bg-green-500/20 text-green-600' : 'bg-muted text-muted-foreground'}`}>
                             {blog.published ? 'Published' : 'Draft'}
                           </span>
                         </div>
@@ -216,17 +221,11 @@ Use # for H1, ## for H2. Leave blank lines between paragraphs."
                             {blog.createdAt ? format(blog.createdAt.toDate(), 'MMM d, yyyy') : ''}
                           </span>
                           <div className="flex items-center gap-2">
-                            <button 
-                              onClick={() => handleTogglePublish(blog.id, blog.published)}
-                              className="text-xs font-medium hover:underline text-foreground"
-                            >
+                            <button onClick={() => handleTogglePublish(blog.id, blog.published)} className="text-xs font-medium hover:underline text-foreground">
                               {blog.published ? 'Unpublish' : 'Publish'}
                             </button>
                             <span className="text-border">•</span>
-                            <button 
-                              onClick={() => handleDelete(blog.id)}
-                              className="text-destructive text-xs font-medium hover:underline"
-                            >
+                            <button onClick={() => handleDelete(blog.id)} className="text-destructive text-xs font-medium hover:underline">
                               Delete
                             </button>
                           </div>

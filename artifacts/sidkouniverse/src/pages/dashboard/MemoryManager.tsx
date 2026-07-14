@@ -2,11 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { PageWrapper } from '@/components/layout/PageWrapper';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLocation } from 'wouter';
-import { db, storage } from '@/lib/firebase';
+import { db, isFirebaseConfigured } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp, deleteDoc, doc, orderBy } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useFirestore } from '@/hooks/useFirestore';
 import { useToast } from '@/hooks/use-toast';
+import { uploadFile } from '@/lib/apiUpload';
 import { Loader2, Upload, Trash2 } from 'lucide-react';
 
 export default function MemoryManager() {
@@ -24,13 +24,10 @@ export default function MemoryManager() {
   const [locationStr, setLocationStr] = useState('');
   const [tags, setTags] = useState('');
   const [file, setFile] = useState<File | null>(null);
-  
   const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
-    if (!isLoading && !isAdmin) {
-      setLocation('/');
-    }
+    if (!isLoading && !isAdmin) setLocation('/');
   }, [isAdmin, isLoading, setLocation]);
 
   if (isLoading || !isAdmin) return null;
@@ -38,12 +35,15 @@ export default function MemoryManager() {
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title || !file) return;
+    if (!isFirebaseConfigured) {
+      toast({ title: 'Firebase is not configured — memories cannot be saved yet.', variant: 'destructive' });
+      return;
+    }
 
     setIsUploading(true);
     try {
-      const storageRef = ref(storage, `memories/${Date.now()}_${file.name}`);
-      await uploadBytes(storageRef, file);
-      const url = await getDownloadURL(storageRef);
+      // Upload image via API (no Firebase Storage needed)
+      const url = await uploadFile(file);
 
       await addDoc(collection(db, 'memories'), {
         title,
@@ -59,17 +59,14 @@ export default function MemoryManager() {
         likesCount: 0,
         commentsCount: 0,
         visibility: 'public',
-        createdAt: serverTimestamp()
+        createdAt: serverTimestamp(),
       });
 
-      setTitle('');
-      setDescription('');
-      setFile(null);
-      setTags('');
-      setLocationStr('');
+      setTitle(''); setDescription(''); setFile(null);
+      setTags(''); setLocationStr('');
       toast({ title: 'Memory uploaded successfully' });
-    } catch (err) {
-      toast({ title: 'Failed to upload memory', variant: 'destructive' });
+    } catch (err: any) {
+      toast({ title: err?.message ?? 'Failed to upload memory', variant: 'destructive' });
     } finally {
       setIsUploading(false);
     }
@@ -80,7 +77,7 @@ export default function MemoryManager() {
     try {
       await deleteDoc(doc(db, 'memories', id));
       toast({ title: 'Memory deleted' });
-    } catch (err) {
+    } catch {
       toast({ title: 'Failed to delete memory', variant: 'destructive' });
     }
   };
@@ -90,6 +87,12 @@ export default function MemoryManager() {
       <div className="max-w-6xl mx-auto py-8">
         <h1 className="text-3xl font-bold mb-8">Memory Manager</h1>
 
+        {!isFirebaseConfigured && (
+          <div className="mb-6 px-4 py-3 rounded-xl bg-yellow-500/10 border border-yellow-500/30 text-yellow-600 dark:text-yellow-400 text-sm">
+            ⚠️ Firebase is not connected — images will upload fine, but the memory record needs Firebase to be saved.
+          </div>
+        )}
+
         <div className="grid lg:grid-cols-3 gap-8">
           <div className="lg:col-span-1">
             <form onSubmit={handleUpload} className="bg-card border border-border rounded-3xl p-6 shadow-sm">
@@ -97,7 +100,9 @@ export default function MemoryManager() {
               
               <div className="space-y-4">
                 <div>
-                  <label className="block text-xs font-medium text-muted-foreground mb-1">Image</label>
+                  <label className="block text-xs font-medium text-muted-foreground mb-1">
+                    Image <span className="text-primary">(direct upload — no Firebase)</span>
+                  </label>
                   <input
                     type="file"
                     accept="image/*"
@@ -108,31 +113,19 @@ export default function MemoryManager() {
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-muted-foreground mb-1">Title</label>
-                  <input
-                    type="text"
-                    value={title}
-                    onChange={e => setTitle(e.target.value)}
-                    className="w-full bg-background border border-border rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary/50 text-foreground"
-                    required
-                  />
+                  <input type="text" value={title} onChange={e => setTitle(e.target.value)}
+                    className="w-full bg-background border border-border rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary/50 text-foreground" required />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-muted-foreground mb-1">Description</label>
-                  <textarea
-                    value={description}
-                    onChange={e => setDescription(e.target.value)}
-                    className="w-full bg-background border border-border rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary/50 text-foreground min-h-[100px] resize-none"
-                    required
-                  />
+                  <textarea value={description} onChange={e => setDescription(e.target.value)}
+                    className="w-full bg-background border border-border rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary/50 text-foreground min-h-[100px] resize-none" required />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-medium text-muted-foreground mb-1">Category</label>
-                    <select
-                      value={category}
-                      onChange={e => setCategory(e.target.value)}
-                      className="w-full bg-background border border-border rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary/50 text-foreground"
-                    >
+                    <select value={category} onChange={e => setCategory(e.target.value)}
+                      className="w-full bg-background border border-border rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary/50 text-foreground">
                       {['Life', 'Gym', 'College', 'Friends', 'Family', 'Coding', 'Travel'].map(c => (
                         <option key={c} value={c}>{c}</option>
                       ))}
@@ -140,40 +133,25 @@ export default function MemoryManager() {
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-muted-foreground mb-1">Date</label>
-                    <input
-                      type="date"
-                      value={date}
-                      onChange={e => setDate(e.target.value)}
-                      className="w-full bg-background border border-border rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary/50 text-foreground"
-                    />
+                    <input type="date" value={date} onChange={e => setDate(e.target.value)}
+                      className="w-full bg-background border border-border rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary/50 text-foreground" />
                   </div>
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-muted-foreground mb-1">Location</label>
-                  <input
-                    type="text"
-                    value={locationStr}
-                    onChange={e => setLocationStr(e.target.value)}
-                    className="w-full bg-background border border-border rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary/50 text-foreground"
-                  />
+                  <input type="text" value={locationStr} onChange={e => setLocationStr(e.target.value)}
+                    className="w-full bg-background border border-border rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary/50 text-foreground" />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-muted-foreground mb-1">Tags (comma separated)</label>
-                  <input
-                    type="text"
-                    value={tags}
-                    onChange={e => setTags(e.target.value)}
-                    className="w-full bg-background border border-border rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary/50 text-foreground"
-                  />
+                  <input type="text" value={tags} onChange={e => setTags(e.target.value)}
+                    className="w-full bg-background border border-border rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary/50 text-foreground" />
                 </div>
                 
-                <button
-                  type="submit"
-                  disabled={isUploading || !title || !file}
-                  className="w-full mt-4 flex items-center justify-center gap-2 bg-primary text-primary-foreground px-4 py-3 rounded-xl font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
-                >
+                <button type="submit" disabled={isUploading || !title || !file}
+                  className="w-full mt-4 flex items-center justify-center gap-2 bg-primary text-primary-foreground px-4 py-3 rounded-xl font-medium hover:opacity-90 transition-opacity disabled:opacity-50">
                   {isUploading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Upload className="w-5 h-5" />}
-                  Upload Memory
+                  {isUploading ? 'Uploading...' : 'Upload Memory'}
                 </button>
               </div>
             </form>
@@ -181,15 +159,13 @@ export default function MemoryManager() {
 
           <div className="lg:col-span-2">
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {memories?.map(m => (
+              {memories?.map((m: any) => (
                 <div key={m.id} className="bg-card border border-border rounded-2xl overflow-hidden group">
                   <div className="aspect-square relative overflow-hidden bg-muted">
                     {m.images?.[0] && <img src={m.images[0]} alt={m.title} className="w-full h-full object-cover" />}
                     <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <button 
-                        onClick={() => handleDelete(m.id)}
-                        className="bg-destructive text-destructive-foreground p-3 rounded-full hover:scale-110 transition-transform"
-                      >
+                      <button onClick={() => handleDelete(m.id)}
+                        className="bg-destructive text-destructive-foreground p-3 rounded-full hover:scale-110 transition-transform">
                         <Trash2 className="w-5 h-5" />
                       </button>
                     </div>

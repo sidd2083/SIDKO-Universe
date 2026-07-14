@@ -4,15 +4,31 @@ Siddhant's personal site: a public blog/portfolio ("digital life" journal — me
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server
-- `pnpm --filter @workspace/sidkouniverse run dev` — run the web frontend
+Workflows (already configured — just press Run):
+- **API Server** — `PORT=8080 pnpm --filter @workspace/api-server run dev` (port 8080)
+- **SidkoUniverse** — `PORT=23562 BASE_PATH=/ pnpm --filter @workspace/sidkouniverse run dev` (port 23562)
+
+Manual commands:
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm run build` — typecheck + build all packages
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
 - `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string
-- Required secrets: `SESSION_SECRET` (signs the admin session cookie), `ADMIN_USERNAME`, `ADMIN_PASSWORD` (admin login credentials for `/balen`)
-- Optional env (unset today): `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_STORAGE_BUCKET`, `VITE_FIREBASE_MESSAGING_SENDER_ID`, `VITE_FIREBASE_APP_ID` — needed to make Firestore-backed content (memories, blog, thoughts, guestbook, NGL, dashboard editors) actually work. See "Gotchas" below.
+
+Required secrets:
+- `SESSION_SECRET` — signs the admin session cookie (already set ✓)
+- `ADMIN_USERNAME`, `ADMIN_PASSWORD` — admin login credentials for `/balen`
+- `DATABASE_URL` — Postgres connection string (needed if/when DB features are used)
+
+Optional (Firebase — only needed for Firestore-backed content):
+- `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_STORAGE_BUCKET`, `VITE_FIREBASE_MESSAGING_SENDER_ID`, `VITE_FIREBASE_APP_ID`
+
+## Vercel Deployment
+
+The root `vercel.json` deploys both frontend and API as one Vercel project:
+- **Build**: builds api-server then the Vite frontend
+- **Routing**: `/api/*` → serverless function at `api/server.ts`; everything else → frontend SPA
+- Set these env vars in Vercel dashboard: `SESSION_SECRET`, `ADMIN_USERNAME`, `ADMIN_PASSWORD`
+- ⚠️ File uploads on Vercel use `/tmp` (ephemeral). For permanent file storage on Vercel, connect Firebase Storage (`VITE_FIREBASE_*` env vars).
 
 ## Stack
 
@@ -51,9 +67,11 @@ _Populate as you build — explicit user instructions worth remembering across s
 
 ## Gotchas
 
-- **Firebase Firestore/Storage is not configured** — no project, no `VITE_FIREBASE_*` env vars. This means all content pages (Memories, Thoughts, Blog, Timeline, Goals, Guestbook, NGL replies, dashboard editors) load but show empty/error states; nothing can be saved yet. This predates the admin-login fix and needs either (a) connecting a real Firebase project, or (b) migrating content storage to the already-provisioned Postgres DB. See the proposed follow-up task.
+- **Uploads now go through the API server** (`POST /api/upload`) — no Firebase Storage needed. Files are stored in `uploads/` folder locally (or `/tmp/uploads` on Vercel). The API must be running for uploads to work.
+- **Settings (status, mood, goal, hero text) are stored on the API server** in `settings.json` — no Firebase needed. Edit from `/dashboard/settings` in the admin panel.
+- **Firebase Firestore is still not configured** — content pages (Memories, Thoughts, Blog, Timeline, Goals, Guestbook, NGL) show empty/error states until Firebase is connected OR storage is migrated to Postgres.
 - Any new code that reads/writes Firestore must guard on `isFirebaseConfigured` (from `src/lib/firebase.ts`) to avoid crashing the page.
-- Admin session cookie is `httpOnly`, `SameSite=Lax`, 30-day expiry, signed with `SESSION_SECRET`. Losing/rotating `SESSION_SECRET` invalidates all admin sessions (users just log in again — no user-facing data loss).
+- Admin session cookie is `httpOnly`, `SameSite=Lax`, 30-day expiry, signed with `SESSION_SECRET`. Losing/rotating `SESSION_SECRET` invalidates all admin sessions (no data loss — just log in again).
 
 ## Pointers
 
