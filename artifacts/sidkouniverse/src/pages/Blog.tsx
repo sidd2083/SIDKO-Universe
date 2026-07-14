@@ -16,7 +16,7 @@ export default function Blog() {
   return (
     <PageWrapper>
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-4xl font-bold mb-4">Blog</h1>
+        <h1 className="text-4xl font-bold mb-4">Sid Philosophy</h1>
         <p className="text-muted-foreground text-lg mb-10">
           Longer articles on tech, life, and building things.
         </p>

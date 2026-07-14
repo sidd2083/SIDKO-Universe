@@ -19,7 +19,7 @@ const navItems = [
   { label: 'Home',         path: '/',            icon: Home },
   { label: 'Memories',     path: '/memories',    icon: ImageIcon },
   { label: 'Thoughts',     path: '/thoughts',    icon: BookOpen },
-  { label: 'Blog',         path: '/blog',        icon: PenTool },
+  { label: 'Sid Philosophy', path: '/blog',        icon: PenTool },
   { label: 'Timeline',     path: '/timeline',    icon: Clock },
   { label: 'Goals',        path: '/goals',       icon: Target },
   { label: 'Achievements', path: '/achievements',icon: Award },

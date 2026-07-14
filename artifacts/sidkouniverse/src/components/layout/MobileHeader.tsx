@@ -9,7 +9,7 @@ const pageTitles: Record<string, string> = {
   '/': '',
   '/memories':     'Memories',
   '/thoughts':     'Thoughts',
-  '/blog':         'Blog',
+  '/blog':         'Sid Philosophy',
   '/timeline':     'Timeline',
   '/goals':        'Goals',
   '/achievements': 'Achievements',

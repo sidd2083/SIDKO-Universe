@@ -16,7 +16,7 @@ const navItems = [
   { path: '/',              icon: Home,          label: 'Home' },
   { path: '/memories',     icon: ImageIcon,     label: 'Memories' },
   { path: '/thoughts',     icon: BookOpen,      label: 'Thoughts' },
-  { path: '/blog',         icon: Newspaper,     label: 'Blog' },
+  { path: '/blog',         icon: Newspaper,     label: 'Sid Philosophy' },
   { path: '/timeline',     icon: MapPin,        label: 'Timeline' },
   { path: '/goals',        icon: Target,        label: 'Goals' },
   { path: '/achievements', icon: Trophy,        label: 'Achievements' },

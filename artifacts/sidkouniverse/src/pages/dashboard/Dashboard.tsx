@@ -33,7 +33,7 @@ export default function Dashboard() {
   const quickActions = [
     { label: 'Memories', icon: ImageIcon, path: '/dashboard/memories', color: 'text-blue-500 bg-blue-500/10' },
     { label: 'Thoughts', icon: BookOpen, path: '/dashboard/thoughts', color: 'text-violet-500 bg-violet-500/10' },
-    { label: 'Blog', icon: PenTool, path: '/dashboard/blog', color: 'text-emerald-500 bg-emerald-500/10' },
+    { label: 'Sid Philosophy', icon: PenTool, path: '/dashboard/blog', color: 'text-emerald-500 bg-emerald-500/10' },
     { label: 'Timeline', icon: Clock, path: '/dashboard/timeline', color: 'text-cyan-500 bg-cyan-500/10' },
     { label: 'Goals', icon: Target, path: '/dashboard/goals', color: 'text-amber-500 bg-amber-500/10' },
     { label: 'Anonymous', icon: MessageSquare, path: '/dashboard/anonymous', color: 'text-orange-500 bg-orange-500/10', badge: pendingAnonymous?.length },
