@@ -3,10 +3,9 @@ import { PageWrapper } from '@/components/layout/PageWrapper';
 import { useFirestore } from '@/hooks/useFirestore';
 import { MemoryCard, Memory } from '@/components/cards/MemoryCard';
 import { ThoughtCard, Thought } from '@/components/cards/ThoughtCard';
-import { GoalCard, Goal } from '@/components/cards/GoalCard';
 import { Skeleton } from '@/components/shared/Skeleton';
 import { Link } from 'wouter';
-import { ArrowRight, Github, ExternalLink } from 'lucide-react';
+import { ArrowRight, Github, ExternalLink, Star, Zap, Globe, Mail } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { orderBy, limit } from 'firebase/firestore';
 
@@ -26,7 +25,6 @@ const DEFAULT_SETTINGS: SiteSettings = {
   statusEmoji: '💻',
 };
 
-/** Pick a status emoji based on keywords if the stored emoji is missing */
 function inferEmoji(status: string, stored?: string): string {
   if (stored) return stored;
   const s = status.toLowerCase();
@@ -41,18 +39,38 @@ function inferEmoji(status: string, stored?: string): string {
   return '🟢';
 }
 
+const projects = [
+  {
+    name: 'StudentHub Nepal',
+    emoji: '🎓',
+    tag: 'FLAGSHIP PROJECT',
+    tagColor: 'bg-primary/10 text-primary',
+    description:
+      'A platform connecting students across Nepal for resources, notes, and peer collaboration. Built to solve the exact problems I face as a Grade 11 student navigating the +2 journey.',
+    stack: ['React', 'Node.js', 'TypeScript', 'AI/ML'],
+    status: 'Active',
+    liveUrl: null as string | null,
+    githubUrl: null as string | null,
+    featured: true,
+  },
+];
+
+const stats = [
+  { label: 'Projects Built', value: '10+', icon: Zap },
+  { label: 'Grade', value: '11', icon: Star },
+  { label: 'Based In', value: 'Nepal', icon: Globe },
+];
+
 export default function Home() {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [settings, setSettings] = useState<SiteSettings>(DEFAULT_SETTINGS);
   const [settingsLoaded, setSettingsLoaded] = useState(false);
 
-  // Clock
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
 
-  // Fetch settings from API (no Firebase needed)
   useEffect(() => {
     fetch('/api/settings')
       .then(r => r.json())
@@ -68,9 +86,6 @@ export default function Home() {
   ]);
   const { data: thoughts, loading: thoughtsLoading } = useFirestore<Thought>('thoughts', [
     orderBy('createdAt', 'desc'), limit(4),
-  ]);
-  const { data: goals, loading: goalsLoading } = useFirestore<Goal>('goals', [
-    orderBy('order', 'asc'), limit(3),
   ]);
 
   const emoji = inferEmoji(settings.currentStatus, settings.statusEmoji);
@@ -88,8 +103,7 @@ export default function Home() {
             transition={{ type: 'spring', stiffness: 300, damping: 28 }}
             className="mb-10 pt-8"
           >
-            <div className="inline-flex items-center gap-4 px-5 py-3.5 rounded-2xl bg-card border border-border shadow-sm hover:shadow-md transition-shadow group">
-              {/* Emoji with live dot */}
+            <div className="inline-flex items-center gap-4 px-5 py-3.5 rounded-2xl bg-card border border-border shadow-sm hover:shadow-md transition-shadow">
               <div className="relative shrink-0">
                 <motion.span
                   className="text-2xl"
@@ -103,8 +117,6 @@ export default function Home() {
                   <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500 border-2 border-card" />
                 </span>
               </div>
-
-              {/* Text */}
               <div className="min-w-0">
                 <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground leading-none mb-1">
                   Right now
@@ -121,8 +133,6 @@ export default function Home() {
                   </motion.span>
                 </p>
               </div>
-
-              {/* Time badge */}
               <div className="hidden sm:flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/60 px-3 py-1.5 rounded-lg shrink-0 ml-2">
                 <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40" />
                 {currentTime.toLocaleTimeString('en-US', {
@@ -146,31 +156,120 @@ export default function Home() {
           className="max-w-2xl"
         >
           <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4 text-foreground">
-            Hi, I'm Siddhant. <br />
-            <span className="text-muted-foreground">{settings.heroText}</span>
+            Hi, I'm Siddhant.{' '}
+            <span className="text-muted-foreground block mt-1">{settings.heroText}</span>
           </h1>
           <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
-            Grade 11 student in Hetauda, Nepal, trying to learn, build, and think a little more clearly
-            every day. This isn't a portfolio — it's a living record of my life, the things I'm figuring
-            out, and the person I'm becoming along the way.
+            Grade 11 student in Hetauda, Nepal — learning to build real things, think more clearly,
+            and document the messy, honest process of growing up.
           </p>
-          <div className="flex flex-wrap gap-4 items-center">
+          <div className="flex flex-wrap gap-3 items-center mb-10">
             <Link
               href="/about"
-              className="bg-primary text-primary-foreground px-6 py-2.5 rounded-xl font-medium hover:scale-[1.02] active:scale-[0.98] transition-all"
+              className="bg-primary text-primary-foreground px-6 py-2.5 rounded-xl font-medium hover:scale-[1.02] active:scale-[0.98] transition-all shadow-sm shadow-primary/20"
             >
-              Explore My Universe
+              About Me
             </Link>
-            <div className="sm:hidden text-sm text-muted-foreground bg-card border border-border px-4 py-2.5 rounded-xl">
-              {currentTime.toLocaleTimeString('en-US', {
-                hour: '2-digit',
-                minute: '2-digit',
-                timeZone: 'Asia/Kathmandu',
-              })}{' '}
-              NPT
-            </div>
+            <Link
+              href="/thoughts"
+              className="bg-card border border-border text-foreground px-6 py-2.5 rounded-xl font-medium hover:bg-muted/60 transition-colors"
+            >
+              Read My Thoughts
+            </Link>
+          </div>
+
+          {/* Stats row */}
+          <div className="flex flex-wrap gap-3">
+            {stats.map(({ label, value, icon: Icon }) => (
+              <div
+                key={label}
+                className="flex items-center gap-2 bg-card border border-border px-4 py-2.5 rounded-xl text-sm"
+              >
+                <Icon className="w-3.5 h-3.5 text-primary shrink-0" />
+                <span className="font-bold text-foreground">{value}</span>
+                <span className="text-muted-foreground">{label}</span>
+              </div>
+            ))}
           </div>
         </motion.div>
+      </section>
+
+      {/* ── Projects ── */}
+      <section className="mb-16">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-bold">Projects</h2>
+        </div>
+
+        <div className="space-y-4">
+          {projects.map((project, i) => (
+            <motion.div
+              key={project.name}
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.08 }}
+              whileHover={{ y: -2 }}
+              className="bg-card border border-border rounded-2xl p-6 md:p-7 shadow-sm hover:shadow-md transition-all"
+            >
+              <div className="flex flex-col sm:flex-row sm:items-start gap-5">
+                {/* Icon */}
+                <div className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center text-2xl shrink-0 border border-border">
+                  {project.emoji}
+                </div>
+
+                {/* Content */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-wrap items-center gap-2 mb-2">
+                    <span className={`text-[10px] font-bold px-2.5 py-1 rounded-lg ${project.tagColor}`}>
+                      {project.tag}
+                    </span>
+                    <span className="text-[10px] font-medium text-green-600 dark:text-green-400 bg-green-500/10 px-2 py-1 rounded-md">
+                      ● {project.status}
+                    </span>
+                  </div>
+
+                  <h3 className="text-xl font-bold mb-2 text-foreground">{project.name}</h3>
+                  <p className="text-muted-foreground text-sm leading-relaxed mb-4">
+                    {project.description}
+                  </p>
+
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {project.stack.map(tech => (
+                      <span
+                        key={tech}
+                        className="text-xs font-medium bg-muted text-muted-foreground px-2.5 py-1 rounded-md border border-border"
+                      >
+                        {tech}
+                      </span>
+                    ))}
+                  </div>
+
+                  <div className="flex flex-wrap gap-3">
+                    {project.liveUrl ? (
+                      <a
+                        href={project.liveUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 bg-foreground text-background px-4 py-2 rounded-xl font-medium text-sm hover:opacity-90 transition-opacity"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" /> Visit Site
+                      </a>
+                    ) : null}
+                    {project.githubUrl ? (
+                      <a
+                        href={project.githubUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 border border-border px-4 py-2 rounded-xl font-medium text-sm hover:bg-muted transition-colors"
+                      >
+                        <Github className="w-3.5 h-3.5" /> GitHub
+                      </a>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
       </section>
 
       {/* ── Latest Memories ── */}
@@ -190,77 +289,66 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── Thoughts + Goals ── */}
-      <div className="grid md:grid-cols-2 gap-10 mb-16">
-        <section>
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold">Recent Thoughts</h2>
-            <Link href="/thoughts" className="text-sm font-medium text-primary hover:underline">View All</Link>
-          </div>
-          <div className="space-y-4">
-            {thoughtsLoading
-              ? Array(3).fill(0).map((_, i) => <Skeleton key={i} className="h-32 rounded-2xl" />)
-              : thoughts.length > 0
-              ? thoughts.map(t => <ThoughtCard key={t.id} thought={t} />)
-              : <div className="text-center py-10 text-muted-foreground border border-dashed border-border rounded-2xl">No thoughts written yet.</div>}
-          </div>
-        </section>
-
-        <section>
-          <h2 className="text-2xl font-bold mb-6">Goals in Progress</h2>
-          <div className="space-y-4">
-            {goalsLoading
-              ? Array(3).fill(0).map((_, i) => <Skeleton key={i} className="h-28 rounded-2xl" />)
-              : goals.length > 0
-              ? goals.map(g => <GoalCard key={g.id} goal={g} />)
-              : <div className="text-center py-10 text-muted-foreground border border-dashed border-border rounded-2xl">No goals set yet.</div>}
-          </div>
-        </section>
-      </div>
-
-      {/* ── Current Focus ── */}
+      {/* ── Recent Thoughts ── */}
       <section className="mb-16">
-        <h2 className="text-2xl font-bold mb-6">Current Focus</h2>
-        <motion.div
-          whileHover={{ y: -2 }}
-          className="bg-card border border-border rounded-3xl p-6 md:p-8 flex flex-col md:flex-row gap-8 items-center shadow-sm"
-        >
-          <div className="w-full md:w-1/3 aspect-video md:aspect-square bg-muted rounded-2xl overflow-hidden shrink-0 flex items-center justify-center">
-            <span className="text-4xl">🎓</span>
-          </div>
-          <div className="flex-1">
-            <div className="inline-block px-3 py-1 bg-primary/10 text-primary text-xs font-bold rounded-lg mb-4">
-              ACTIVE PROJECT
-            </div>
-            <h3 className="text-2xl font-bold mb-2">StudentHub Nepal</h3>
-            <p className="text-muted-foreground mb-6 leading-relaxed">
-              A platform connecting students across Nepal for resources, notes, and collaboration. Built to solve
-              the exact problems I face as a Grade 11 student.
-            </p>
-            <div className="flex flex-wrap gap-2 mb-6">
-              {['React', 'Firebase', 'Tailwind', 'AI/ML'].map(tech => (
-                <span key={tech} className="text-xs font-medium bg-muted px-2.5 py-1 rounded-md">{tech}</span>
-              ))}
-            </div>
-            <div className="flex gap-4">
-              <button className="flex items-center gap-2 bg-foreground text-background px-4 py-2 rounded-xl font-medium text-sm hover:opacity-90 transition-opacity">
-                <ExternalLink className="w-4 h-4" /> Visit Site
-              </button>
-              <button className="flex items-center gap-2 border border-border px-4 py-2 rounded-xl font-medium text-sm hover:bg-muted transition-colors">
-                <Github className="w-4 h-4" /> GitHub
-              </button>
-            </div>
-          </div>
-        </motion.div>
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-bold">Recent Thoughts</h2>
+          <Link href="/thoughts" className="text-sm font-medium text-primary hover:underline flex items-center gap-1">
+            View All <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
+        <div className="grid sm:grid-cols-2 gap-4">
+          {thoughtsLoading
+            ? Array(4).fill(0).map((_, i) => <Skeleton key={i} className="h-32 rounded-2xl" />)
+            : thoughts.length > 0
+            ? thoughts.map(t => <ThoughtCard key={t.id} thought={t} />)
+            : (
+              <div className="col-span-full text-center py-10 text-muted-foreground border border-dashed border-border rounded-2xl">
+                No thoughts written yet.
+              </div>
+            )}
+        </div>
       </section>
 
       {/* ── Footer ── */}
-      <footer className="py-8 border-t border-border flex flex-col md:flex-row items-center justify-between text-sm text-muted-foreground gap-4">
-        <p>© {new Date().getFullYear()} Siddhant Lamichhane.</p>
-        <div className="flex items-center gap-4">
-          <span>Mood: {settings.currentMood}</span>
-          <span>•</span>
-          <span>Goal: {settings.currentGoal}</span>
+      <footer className="py-10 border-t border-border mt-4">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+          {/* Left: identity */}
+          <div>
+            <p className="font-semibold text-foreground mb-1">Siddhant Lamichhane</p>
+            <p className="text-sm text-muted-foreground">
+              Grade 11 · Hetauda, Nepal · Building things that matter.
+            </p>
+          </div>
+
+          {/* Center: quick links */}
+          <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+            {[
+              { label: 'About', href: '/about' },
+              { label: 'Thoughts', href: '/thoughts' },
+              { label: 'Memories', href: '/memories' },
+              { label: 'Guestbook', href: '/guestbook' },
+              { label: 'NGL', href: '/anonymous' },
+            ].map(({ label, href }) => (
+              <Link key={label} href={href} className="hover:text-foreground transition-colors">
+                {label}
+              </Link>
+            ))}
+          </div>
+
+          {/* Right: live info */}
+          <div className="flex flex-col items-start md:items-end gap-1 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
+              {currentTime.toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit',
+                timeZone: 'Asia/Kathmandu',
+              })}{' '}
+              NPT
+            </span>
+            <span>© {new Date().getFullYear()} Siddhant Lamichhane</span>
+          </div>
         </div>
       </footer>
     </PageWrapper>
