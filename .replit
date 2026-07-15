@@ -58,3 +58,13 @@ timeoutMs = 20000
 
 [nix]
 channel = "stable-25_05"
+
+[userenv]
+
+[userenv.shared]
+VITE_FIREBASE_API_KEY = "AIzaSyCw3Rx0pIDnEk1WDKLOpffax5BPD6C9Psk"
+VITE_FIREBASE_APP_ID = "1:482346208574:web:2a5f3149389aa6e391306f"
+VITE_FIREBASE_AUTH_DOMAIN = "sidhub-a359f.firebaseapp.com"
+VITE_FIREBASE_MESSAGING_SENDER_ID = "482346208574"
+VITE_FIREBASE_PROJECT_ID = "sidhub-a359f"
+VITE_FIREBASE_STORAGE_BUCKET = "sidhub-a359f.firebasestorage.app"
