@@ -49,7 +49,7 @@ const projects = [
       'A platform connecting students across Nepal for resources, notes, and peer collaboration. Built to solve the exact problems I face as a Grade 11 student navigating the +2 journey.',
     stack: ['React', 'Node.js', 'TypeScript', 'AI/ML'],
     status: 'Active',
-    liveUrl: null as string | null,
+    liveUrl: 'https://studenthubnp.com' as string | null,
     githubUrl: null as string | null,
     featured: true,
   },
@@ -171,10 +171,10 @@ export default function Home() {
               About Me
             </Link>
             <Link
-              href="/thoughts"
+              href="/blog"
               className="bg-card border border-border text-foreground px-6 py-2.5 rounded-xl font-medium hover:bg-muted/60 transition-colors"
             >
-              Read My Thoughts
+              Read My Philosophy
             </Link>
           </div>
 
@@ -192,84 +192,6 @@ export default function Home() {
             ))}
           </div>
         </motion.div>
-      </section>
-
-      {/* ── Projects ── */}
-      <section className="mb-16">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold">Projects</h2>
-        </div>
-
-        <div className="space-y-4">
-          {projects.map((project, i) => (
-            <motion.div
-              key={project.name}
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.08 }}
-              whileHover={{ y: -2 }}
-              className="bg-card border border-border rounded-2xl p-6 md:p-7 shadow-sm hover:shadow-md transition-all"
-            >
-              <div className="flex flex-col sm:flex-row sm:items-start gap-5">
-                {/* Icon */}
-                <div className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center text-2xl shrink-0 border border-border">
-                  {project.emoji}
-                </div>
-
-                {/* Content */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex flex-wrap items-center gap-2 mb-2">
-                    <span className={`text-[10px] font-bold px-2.5 py-1 rounded-lg ${project.tagColor}`}>
-                      {project.tag}
-                    </span>
-                    <span className="text-[10px] font-medium text-green-600 dark:text-green-400 bg-green-500/10 px-2 py-1 rounded-md">
-                      ● {project.status}
-                    </span>
-                  </div>
-
-                  <h3 className="text-xl font-bold mb-2 text-foreground">{project.name}</h3>
-                  <p className="text-muted-foreground text-sm leading-relaxed mb-4">
-                    {project.description}
-                  </p>
-
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {project.stack.map(tech => (
-                      <span
-                        key={tech}
-                        className="text-xs font-medium bg-muted text-muted-foreground px-2.5 py-1 rounded-md border border-border"
-                      >
-                        {tech}
-                      </span>
-                    ))}
-                  </div>
-
-                  <div className="flex flex-wrap gap-3">
-                    {project.liveUrl ? (
-                      <a
-                        href={project.liveUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2 bg-foreground text-background px-4 py-2 rounded-xl font-medium text-sm hover:opacity-90 transition-opacity"
-                      >
-                        <ExternalLink className="w-3.5 h-3.5" /> Visit Site
-                      </a>
-                    ) : null}
-                    {project.githubUrl ? (
-                      <a
-                        href={project.githubUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2 border border-border px-4 py-2 rounded-xl font-medium text-sm hover:bg-muted transition-colors"
-                      >
-                        <Github className="w-3.5 h-3.5" /> GitHub
-                      </a>
-                    ) : null}
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          ))}
-        </div>
       </section>
 
       {/* ── Latest Memories ── */}
@@ -310,8 +232,75 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ── Projects ── */}
+      <section className="mb-16">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-bold">Projects</h2>
+        </div>
+
+        <div className="space-y-4">
+          {projects.map((project, i) => (
+            <motion.div
+              key={project.name}
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.08 }}
+              whileHover={{ y: -2 }}
+              className="bg-card border border-border rounded-2xl p-6 md:p-7 shadow-sm hover:shadow-md transition-all"
+            >
+              <div className="flex flex-col sm:flex-row sm:items-start gap-5">
+                <div className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center text-2xl shrink-0 border border-border">
+                  {project.emoji}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-wrap items-center gap-2 mb-2">
+                    <span className={`text-[10px] font-bold px-2.5 py-1 rounded-lg ${project.tagColor}`}>
+                      {project.tag}
+                    </span>
+                    <span className="text-[10px] font-medium text-green-600 dark:text-green-400 bg-green-500/10 px-2 py-1 rounded-md">
+                      ● {project.status}
+                    </span>
+                  </div>
+                  <h3 className="text-xl font-bold mb-2 text-foreground">{project.name}</h3>
+                  <p className="text-muted-foreground text-sm leading-relaxed mb-4">{project.description}</p>
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {project.stack.map(tech => (
+                      <span key={tech} className="text-xs font-medium bg-muted text-muted-foreground px-2.5 py-1 rounded-md border border-border">
+                        {tech}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="flex flex-wrap gap-3">
+                    {project.liveUrl ? (
+                      <a href={project.liveUrl} target="_blank" rel="noopener noreferrer"
+                        className="flex items-center gap-2 bg-foreground text-background px-4 py-2 rounded-xl font-medium text-sm hover:opacity-90 transition-opacity">
+                        <ExternalLink className="w-3.5 h-3.5" /> Visit Site
+                      </a>
+                    ) : null}
+                    {project.githubUrl ? (
+                      <a href={project.githubUrl} target="_blank" rel="noopener noreferrer"
+                        className="flex items-center gap-2 border border-border px-4 py-2 rounded-xl font-medium text-sm hover:bg-muted transition-colors">
+                        <Github className="w-3.5 h-3.5" /> GitHub
+                      </a>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
       {/* ── Footer ── */}
-      <footer className="py-10 border-t border-border mt-4">
+      <footer className="pt-10 pb-8 border-t border-border mt-4">
+        {/* Quote */}
+        <div className="mb-8 px-6 py-5 rounded-2xl bg-card border border-border">
+          <p className="text-sm md:text-base text-foreground/80 italic leading-relaxed">
+            "When something is important enough, you do it even if the odds are not in your favor."
+          </p>
+          <p className="text-xs text-muted-foreground mt-2 font-medium">— Elon Musk</p>
+        </div>
+
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           {/* Left: identity */}
           <div>
@@ -325,7 +314,7 @@ export default function Home() {
           <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
             {[
               { label: 'About', href: '/about' },
-              { label: 'Thoughts', href: '/thoughts' },
+              { label: 'Philosophy', href: '/blog' },
               { label: 'Memories', href: '/memories' },
               { label: 'Guestbook', href: '/guestbook' },
               { label: 'NGL', href: '/anonymous' },
@@ -336,7 +325,7 @@ export default function Home() {
             ))}
           </div>
 
-          {/* Right: live info */}
+          {/* Right: live clock */}
           <div className="flex flex-col items-start md:items-end gap-1 text-xs text-muted-foreground">
             <span className="flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-green-500" />

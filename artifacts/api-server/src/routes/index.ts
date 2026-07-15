@@ -4,6 +4,7 @@ import authRouter from "./auth.js";
 import uploadRouter from "./upload.js";
 import settingsRouter from "./settings.js";
 import firestoreRouter from "./firestore.js";
+import musicRouter from "./music.js";
 
 const router: IRouter = Router();
 
@@ -12,5 +13,6 @@ router.use(authRouter);
 router.use(uploadRouter);
 router.use(settingsRouter);
 router.use(firestoreRouter);
+router.use(musicRouter);
 
 export default router;
