@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'wouter';
-import { Home, Image as ImageIcon, MessageSquare, MessageCircle, Menu } from 'lucide-react';
+import { Home, Image as ImageIcon, MessageSquare, PenTool, Menu } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MobileDrawer } from './MobileDrawer';
 
 const items = [
-  { id: 'home',      path: '/',           icon: Home,          label: 'Home' },
-  { id: 'memories',  path: '/memories',   icon: ImageIcon,     label: 'Memories' },
-  { id: 'ngl',       path: '/anonymous',  icon: MessageSquare, label: 'NGL' },
-  { id: 'messages',  path: '/messages',   icon: MessageCircle, label: 'Messages' },
+  { id: 'home',        path: '/',          icon: Home,          label: 'Home' },
+  { id: 'memories',    path: '/memories',  icon: ImageIcon,     label: 'Memories' },
+  { id: 'ngl',         path: '/anonymous', icon: MessageSquare, label: 'NGL' },
+  { id: 'philosophy',  path: '/blog',      icon: PenTool,       label: 'Philosophy' },
 ];
 
 export function BottomNav() {
@@ -27,7 +27,7 @@ export function BottomNav() {
         <div
           className="relative flex items-stretch border-t border-border/60"
           style={{
-            background: 'hsl(var(--background) / 0.85)',
+            background: 'hsl(var(--background) / 0.88)',
             backdropFilter: 'saturate(180%) blur(20px)',
             WebkitBackdropFilter: 'saturate(180%) blur(20px)',
           }}
@@ -78,7 +78,7 @@ export function BottomNav() {
             );
           })}
 
-          {/* More button */}
+          {/* More */}
           <motion.button
             whileTap={{ scale: 0.88 }}
             transition={{ type: 'spring', stiffness: 500, damping: 30 }}
