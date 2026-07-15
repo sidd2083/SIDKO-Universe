@@ -40,20 +40,33 @@ export function isValidSessionToken(token: string | undefined): boolean {
 }
 
 export function verifyCredentials(username: string, password: string): boolean {
-  const adminUsername = process.env.ADMIN_USERNAME;
-  const adminPassword = process.env.ADMIN_PASSWORD;
+  const adminUsername = process.env.ADMIN_USERNAME?.trim();
+  const adminPassword = process.env.ADMIN_PASSWORD?.trim();
   if (!adminUsername || !adminPassword) return false;
 
-  const usernameOk = timingSafeStringEqual(username, adminUsername);
-  const passwordOk = timingSafeStringEqual(password, adminPassword);
+  // Trim the incoming credentials too — prevents trivial failures from
+  // copy-paste whitespace while still doing a constant-time comparison.
+  const usernameOk = timingSafeStringEqual(username.trim(), adminUsername);
+  const passwordOk = timingSafeStringEqual(password.trim(), adminPassword);
   return usernameOk && passwordOk;
 }
 
+/**
+ * Constant-time string comparison that pads the shorter input so the loop
+ * always runs the same number of iterations, leaking no length information.
+ */
 function timingSafeStringEqual(a: string, b: string): boolean {
   const aBuf = Buffer.from(a);
   const bBuf = Buffer.from(b);
-  if (aBuf.length !== bBuf.length) return false;
-  return crypto.timingSafeEqual(aBuf, bBuf);
+  // Pad to the same length so timingSafeEqual can run; XOR the length
+  // difference into the result bit so mismatched lengths still fail.
+  const maxLen = Math.max(aBuf.length, bBuf.length);
+  const aPad = Buffer.alloc(maxLen);
+  const bPad = Buffer.alloc(maxLen);
+  aBuf.copy(aPad);
+  bBuf.copy(bPad);
+  const equal = crypto.timingSafeEqual(aPad, bPad);
+  return equal && aBuf.length === bBuf.length;
 }
 
 export const ADMIN_COOKIE_NAME = COOKIE_NAME;
