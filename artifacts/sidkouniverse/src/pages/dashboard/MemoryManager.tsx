@@ -2,8 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { PageWrapper } from '@/components/layout/PageWrapper';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLocation } from 'wouter';
-import { db, isFirebaseConfigured } from '@/lib/firebase';
-import { collection, addDoc, serverTimestamp, deleteDoc, doc, orderBy } from 'firebase/firestore';
+import { isFirebaseConfigured } from '@/lib/firebase';
+import { orderBy } from 'firebase/firestore';
+import { addFirestoreDoc, deleteFirestoreDoc, SERVER_TIMESTAMP } from '@/lib/firestoreApi';
 import { useFirestore } from '@/hooks/useFirestore';
 import { useToast } from '@/hooks/use-toast';
 import { uploadFile } from '@/lib/apiUpload';
@@ -45,7 +46,7 @@ export default function MemoryManager() {
       // Upload image via API (no Firebase Storage needed)
       const url = await uploadFile(file);
 
-      await addDoc(collection(db, 'memories'), {
+      await addFirestoreDoc('memories', {
         title,
         description,
         images: [url],
@@ -59,7 +60,7 @@ export default function MemoryManager() {
         likesCount: 0,
         commentsCount: 0,
         visibility: 'public',
-        createdAt: serverTimestamp(),
+        createdAt: SERVER_TIMESTAMP,
       });
 
       setTitle(''); setDescription(''); setFile(null);
@@ -75,7 +76,7 @@ export default function MemoryManager() {
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this memory?')) return;
     try {
-      await deleteDoc(doc(db, 'memories', id));
+      await deleteFirestoreDoc('memories', id);
       toast({ title: 'Memory deleted' });
     } catch {
       toast({ title: 'Failed to delete memory', variant: 'destructive' });

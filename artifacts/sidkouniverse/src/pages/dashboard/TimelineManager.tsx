@@ -3,8 +3,8 @@ import { PageWrapper } from '@/components/layout/PageWrapper';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLocation } from 'wouter';
 import { useFirestore } from '@/hooks/useFirestore';
-import { db } from '@/lib/firebase';
-import { collection, addDoc, deleteDoc, doc, updateDoc, serverTimestamp, orderBy } from 'firebase/firestore';
+import { orderBy } from 'firebase/firestore';
+import { addFirestoreDoc, updateFirestoreDoc, deleteFirestoreDoc, SERVER_TIMESTAMP } from '@/lib/firestoreApi';
 import { Plus, Trash2, Star, Pencil, X, Check, Loader2, Clock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { TimelineEvent } from '@/pages/Timeline';
@@ -62,13 +62,13 @@ export default function TimelineManager() {
       const data = {
         ...form,
         year: new Date(form.date).getFullYear().toString(),
-        updatedAt: serverTimestamp(),
+        updatedAt: SERVER_TIMESTAMP,
       };
       if (editingId) {
-        await updateDoc(doc(db, 'timeline', editingId), data);
+        await updateFirestoreDoc('timeline', editingId, data);
         toast({ title: 'Event updated' });
       } else {
-        await addDoc(collection(db, 'timeline'), { ...data, createdAt: serverTimestamp() });
+        await addFirestoreDoc('timeline', { ...data, createdAt: SERVER_TIMESTAMP });
         toast({ title: 'Event added' });
       }
       resetForm();
@@ -82,7 +82,7 @@ export default function TimelineManager() {
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this event?')) return;
     try {
-      await deleteDoc(doc(db, 'timeline', id));
+      await deleteFirestoreDoc('timeline', id);
       toast({ title: 'Event deleted' });
     } catch {
       toast({ title: 'Error deleting event', variant: 'destructive' });

@@ -3,8 +3,8 @@ import { PageWrapper } from '@/components/layout/PageWrapper';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLocation } from 'wouter';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, serverTimestamp, deleteDoc, doc, orderBy, limit, getDocs } from 'firebase/firestore';
-import { useFirestore } from '@/hooks/useFirestore';
+import { collection, getDocs } from 'firebase/firestore';
+import { addFirestoreDoc, deleteFirestoreDoc, SERVER_TIMESTAMP } from '@/lib/firestoreApi';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Plus, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
@@ -56,13 +56,13 @@ export default function Journal() {
       const newEntry = {
         content,
         mood,
-        createdAt: serverTimestamp(),
+        createdAt: SERVER_TIMESTAMP,
         dateStr: format(new Date(), 'yyyy-MM-dd')
       };
-      
-      const docRef = await addDoc(collection(db, `journal_${user?.uid}`), newEntry);
-      
-      setEntries([{ id: docRef.id, ...newEntry, createdAt: { toDate: () => new Date() } }, ...entries]);
+
+      const { id } = await addFirestoreDoc(`journal_${user?.uid}`, newEntry);
+
+      setEntries([{ id, ...newEntry, createdAt: { toDate: () => new Date() } }, ...entries]);
       setContent('');
       toast({ title: 'Entry saved' });
     } catch (err) {
@@ -75,7 +75,7 @@ export default function Journal() {
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this entry?')) return;
     try {
-      await deleteDoc(doc(db, `journal_${user?.uid}`, id));
+      await deleteFirestoreDoc(`journal_${user?.uid}`, id);
       setEntries(entries.filter(e => e.id !== id));
       toast({ title: 'Entry deleted' });
     } catch (err) {

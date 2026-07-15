@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { PageWrapper } from '@/components/layout/PageWrapper';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLocation } from 'wouter';
-import { db, isFirebaseConfigured } from '@/lib/firebase';
-import { collection, addDoc, serverTimestamp, deleteDoc, doc } from 'firebase/firestore';
+import { isFirebaseConfigured } from '@/lib/firebase';
+import { addFirestoreDoc, deleteFirestoreDoc, SERVER_TIMESTAMP } from '@/lib/firestoreApi';
 import { useFirestore } from '@/hooks/useFirestore';
 import { useToast } from '@/hooks/use-toast';
 import { uploadFile } from '@/lib/apiUpload';
@@ -40,12 +40,12 @@ export default function MusicManager() {
       // Upload audio via API (no Firebase Storage needed)
       const url = await uploadFile(file);
 
-      await addDoc(collection(db, 'music'), {
+      await addFirestoreDoc('music', {
         title,
         url,
         coverImage: cover || '',
         order: tracks.length,
-        createdAt: serverTimestamp(),
+        createdAt: SERVER_TIMESTAMP,
       });
 
       setTitle(''); setFile(null); setCover('');
@@ -60,7 +60,7 @@ export default function MusicManager() {
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this track?')) return;
     try {
-      await deleteDoc(doc(db, 'music', id));
+      await deleteFirestoreDoc('music', id);
       toast({ title: 'Track deleted' });
     } catch {
       toast({ title: 'Failed to delete track', variant: 'destructive' });

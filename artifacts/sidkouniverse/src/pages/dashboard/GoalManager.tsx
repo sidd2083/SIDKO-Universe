@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { PageWrapper } from '@/components/layout/PageWrapper';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLocation } from 'wouter';
-import { db } from '@/lib/firebase';
-import { collection, addDoc, serverTimestamp, deleteDoc, doc, updateDoc, orderBy } from 'firebase/firestore';
+import { orderBy } from 'firebase/firestore';
+import { addFirestoreDoc, updateFirestoreDoc, deleteFirestoreDoc, SERVER_TIMESTAMP } from '@/lib/firestoreApi';
 import { useFirestore } from '@/hooks/useFirestore';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Plus, Trash2, CheckCircle2, Circle } from 'lucide-react';
@@ -34,14 +34,14 @@ export default function GoalManager() {
 
     setIsSaving(true);
     try {
-      await addDoc(collection(db, 'goals'), {
+      await addFirestoreDoc('goals', {
         title,
         description,
         progress: 0,
         targetDate,
         milestones: [],
         order: goals.length,
-        createdAt: serverTimestamp()
+        createdAt: SERVER_TIMESTAMP,
       });
 
       setTitle('');
@@ -58,7 +58,7 @@ export default function GoalManager() {
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this goal?')) return;
     try {
-      await deleteDoc(doc(db, 'goals', id));
+      await deleteFirestoreDoc('goals', id);
       toast({ title: 'Goal deleted' });
     } catch (err) {
       toast({ title: 'Failed to delete goal', variant: 'destructive' });
@@ -67,7 +67,7 @@ export default function GoalManager() {
 
   const handleUpdateProgress = async (id: string, progress: number) => {
     try {
-      await updateDoc(doc(db, 'goals', id), { progress });
+      await updateFirestoreDoc('goals', id, { progress });
     } catch (err) {
       toast({ title: 'Failed to update progress', variant: 'destructive' });
     }
@@ -78,8 +78,8 @@ export default function GoalManager() {
     if (!title) return;
     
     try {
-      await updateDoc(doc(db, 'goals', goalId), { 
-        milestones: [...milestones, { title, done: false }]
+      await updateFirestoreDoc('goals', goalId, {
+        milestones: [...milestones, { title, done: false }],
       });
     } catch (err) {
       toast({ title: 'Failed to add milestone', variant: 'destructive' });
@@ -91,7 +91,7 @@ export default function GoalManager() {
     newMilestones[index].done = !newMilestones[index].done;
     
     try {
-      await updateDoc(doc(db, 'goals', goalId), { milestones: newMilestones });
+      await updateFirestoreDoc('goals', goalId, { milestones: newMilestones });
     } catch (err) {
       toast({ title: 'Failed to update milestone', variant: 'destructive' });
     }

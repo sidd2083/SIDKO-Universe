@@ -3,8 +3,8 @@ import { PageWrapper } from '@/components/layout/PageWrapper';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLocation } from 'wouter';
 import { useFirestore } from '@/hooks/useFirestore';
-import { db } from '@/lib/firebase';
-import { doc, updateDoc, deleteDoc, orderBy } from 'firebase/firestore';
+import { orderBy } from 'firebase/firestore';
+import { updateFirestoreDoc, deleteFirestoreDoc } from '@/lib/firestoreApi';
 import { useToast } from '@/hooks/use-toast';
 import { Check, X, Pin, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
@@ -30,7 +30,7 @@ export default function AnonymousCenter() {
       return;
     }
     try {
-      await updateDoc(doc(db, 'anonymous_messages', id), { approved: true, reply });
+      await updateFirestoreDoc('anonymous_messages', id, { approved: true, reply });
       toast({ title: 'Message approved and published' });
     } catch (err) {
       toast({ title: 'Failed to approve message', variant: 'destructive' });
@@ -40,7 +40,7 @@ export default function AnonymousCenter() {
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this message?')) return;
     try {
-      await deleteDoc(doc(db, 'anonymous_messages', id));
+      await deleteFirestoreDoc('anonymous_messages', id);
       toast({ title: 'Message deleted' });
     } catch (err) {
       toast({ title: 'Failed to delete message', variant: 'destructive' });
@@ -49,7 +49,7 @@ export default function AnonymousCenter() {
 
   const handleTogglePin = async (id: string, currentPin: boolean) => {
     try {
-      await updateDoc(doc(db, 'anonymous_messages', id), { pinned: !currentPin });
+      await updateFirestoreDoc('anonymous_messages', id, { pinned: !currentPin });
       toast({ title: currentPin ? 'Message unpinned' : 'Message pinned' });
     } catch (err) {
       toast({ title: 'Failed to update pin status', variant: 'destructive' });

@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { PageWrapper } from '@/components/layout/PageWrapper';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLocation } from 'wouter';
-import { db } from '@/lib/firebase';
-import { collection, addDoc, serverTimestamp, deleteDoc, doc, updateDoc, orderBy } from 'firebase/firestore';
+import { orderBy } from 'firebase/firestore';
+import { addFirestoreDoc, updateFirestoreDoc, deleteFirestoreDoc, SERVER_TIMESTAMP } from '@/lib/firestoreApi';
 import { useFirestore } from '@/hooks/useFirestore';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Save, Trash2, Globe } from 'lucide-react';
@@ -38,7 +38,7 @@ export default function ThoughtEditor() {
 
     setIsSaving(true);
     try {
-      await addDoc(collection(db, 'thoughts'), {
+      await addFirestoreDoc('thoughts', {
         title,
         content,
         mood,
@@ -47,7 +47,7 @@ export default function ThoughtEditor() {
         published,
         likesCount: 0,
         commentsCount: 0,
-        createdAt: serverTimestamp()
+        createdAt: SERVER_TIMESTAMP,
       });
 
       setTitle('');
@@ -64,7 +64,7 @@ export default function ThoughtEditor() {
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this thought?')) return;
     try {
-      await deleteDoc(doc(db, 'thoughts', id));
+      await deleteFirestoreDoc('thoughts', id);
       toast({ title: 'Thought deleted' });
     } catch (err) {
       toast({ title: 'Failed to delete thought', variant: 'destructive' });
@@ -73,7 +73,7 @@ export default function ThoughtEditor() {
 
   const handleTogglePublish = async (id: string, currentlyPublished: boolean) => {
     try {
-      await updateDoc(doc(db, 'thoughts', id), { published: !currentlyPublished });
+      await updateFirestoreDoc('thoughts', id, { published: !currentlyPublished });
       toast({ title: currentlyPublished ? 'Unpublished' : 'Published' });
     } catch (err) {
       toast({ title: 'Failed to update status', variant: 'destructive' });

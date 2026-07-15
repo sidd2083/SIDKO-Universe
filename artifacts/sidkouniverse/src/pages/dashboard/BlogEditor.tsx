@@ -2,11 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { PageWrapper } from '@/components/layout/PageWrapper';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLocation } from 'wouter';
-import { db, isFirebaseConfigured } from '@/lib/firebase';
-import { collection, addDoc, serverTimestamp, deleteDoc, doc, updateDoc, orderBy } from 'firebase/firestore';
+import { isFirebaseConfigured } from '@/lib/firebase';
+import { orderBy } from 'firebase/firestore';
 import { useFirestore } from '@/hooks/useFirestore';
 import { useToast } from '@/hooks/use-toast';
 import { uploadFile } from '@/lib/apiUpload';
+import { addFirestoreDoc, updateFirestoreDoc, deleteFirestoreDoc, SERVER_TIMESTAMP } from '@/lib/firestoreApi';
 import { Loader2, Globe, Image as ImageIcon } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -54,7 +55,7 @@ export default function BlogEditor() {
         finalCoverUrl = await uploadFile(file);
       }
 
-      await addDoc(collection(db, 'blogs'), {
+      await addFirestoreDoc('blogs', {
         title,
         slug,
         content,
@@ -62,7 +63,7 @@ export default function BlogEditor() {
         coverImage: finalCoverUrl,
         readingTime: Number(readingTime),
         published,
-        createdAt: serverTimestamp(),
+        createdAt: SERVER_TIMESTAMP,
       });
 
       setTitle(''); setSlug(''); setContent(''); setExcerpt('');
@@ -78,7 +79,7 @@ export default function BlogEditor() {
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this article?')) return;
     try {
-      await deleteDoc(doc(db, 'blogs', id));
+      await deleteFirestoreDoc('blogs', id);
       toast({ title: 'Article deleted' });
     } catch {
       toast({ title: 'Failed to delete article', variant: 'destructive' });
@@ -87,7 +88,7 @@ export default function BlogEditor() {
 
   const handleTogglePublish = async (id: string, currentlyPublished: boolean) => {
     try {
-      await updateDoc(doc(db, 'blogs', id), { published: !currentlyPublished });
+      await updateFirestoreDoc('blogs', id, { published: !currentlyPublished });
       toast({ title: currentlyPublished ? 'Unpublished' : 'Published' });
     } catch {
       toast({ title: 'Failed to update status', variant: 'destructive' });
