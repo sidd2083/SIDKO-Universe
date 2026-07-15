@@ -28,8 +28,9 @@ const upload = multer({
   storage,
   limits: { fileSize: 50 * 1024 * 1024 }, // 50 MB
   fileFilter: (_req, file, cb) => {
-    const allowed = /^(image\/(jpeg|png|webp|gif)|audio\/(mp3|mpeg))$/;
-    if (allowed.test(file.mimetype)) {
+    const isImage = file.mimetype.startsWith('image/');
+    const isAudio = file.mimetype.startsWith('audio/') || file.mimetype === 'application/octet-stream';
+    if (isImage || isAudio) {
       cb(null, true);
     } else {
       cb(new Error(`File type "${file.mimetype}" is not allowed`));

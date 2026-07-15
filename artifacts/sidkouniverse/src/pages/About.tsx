@@ -10,7 +10,7 @@ import { Link } from 'wouter';
 
 const skills = [
   { icon: Code2,    label: 'Full-Stack Web Dev',   desc: 'React, Node.js, TypeScript, REST APIs, Express' },
-  { icon: Brain,    label: 'AI / Machine Learning', desc: 'Python, NumPy, Pandas — deep in the rabbit hole' },
+  { icon: Brain,    label: 'AI / Machine Learning', desc: 'Python, NumPy, Pandas. Deep in the rabbit hole.' },
   { icon: Layers,   label: 'UI & Design Systems',   desc: 'Tailwind CSS, Framer Motion, component design' },
   { icon: Database, label: 'Databases & APIs',       desc: 'PostgreSQL, Drizzle ORM, REST API design' },
   { icon: Globe,    label: 'WordPress',              desc: 'Custom themes, plugins, site architecture' },
@@ -75,18 +75,18 @@ export default function About() {
           <div className="bg-card border border-border rounded-2xl p-6 space-y-4 text-muted-foreground leading-relaxed text-sm">
             <p>
               I'm not the type who has everything figured out. I get overwhelmed. I procrastinate.
-              I start things and don't finish them. I want to learn everything — AI, math, physics,
-              business, design — and end up doing none of it properly some days.
+              I start things and don't finish them. I want to learn everything: AI, math, physics,
+              business, design. And end up doing none of it properly some days.
             </p>
             <p>
               But I keep showing up. I built this site not to show off, but because I needed a place
-              that was <em className="text-foreground font-medium">mine</em> — no algorithm, no likes
+              that was <em className="text-foreground font-medium">mine</em>. No algorithm, no likes
               count, no performance. Just me, writing and building in public, figuring out who I'm
               becoming.
             </p>
             <p>
               If you're a 17-year-old somewhere trying to build something real with limited resources
-              and too many ideas — this site is proof that you can start anyway.
+              and too many ideas. This site is proof that you can start anyway.
             </p>
           </div>
         </motion.section>
@@ -113,7 +113,7 @@ export default function About() {
                     </span>
                   </div>
                   <p className="text-sm text-muted-foreground leading-relaxed mb-3">
-                    A platform for students across Nepal — resources, notes, and peer collaboration.
+                    A platform for students across Nepal: resources, notes, and peer collaboration.
                     I built the tool I wished existed when I started my +2 journey. It's not perfect.
                     It's alive. And it's growing.
                   </p>
@@ -129,14 +129,14 @@ export default function About() {
             </motion.div>
           </Link>
           <p className="text-sm text-muted-foreground mt-3 px-1">
-            More projects coming — I build in phases. StudentHub is the big one right now.
+            More projects coming. I build in phases. StudentHub is the big one right now.
           </p>
         </motion.section>
 
         {/* ── Skills ── */}
         <motion.section {...fade(0.15)}>
           <h2 className="text-xl font-bold mb-2">Skills</h2>
-          <p className="text-sm text-muted-foreground mb-5">Things I can actually build with — not buzzwords.</p>
+          <p className="text-sm text-muted-foreground mb-5">Things I can actually build with. Not buzzwords.</p>
           <div className="grid sm:grid-cols-2 gap-3">
             {skills.map((skill) => (
               <motion.div
@@ -207,7 +207,7 @@ export default function About() {
             <p>
               Social media wanted me to perform. This site lets me <em className="text-foreground font-medium">exist</em>.
               No algorithm decides what you see. No like count tells me if something was worth writing.
-              Just me, documenting my life as it actually happens — the good builds, the failed experiments,
+              Just me, documenting my life as it actually happens: the good builds, the failed experiments,
               the random 2am thoughts, the memories I don't want to forget.
             </p>
             <p>

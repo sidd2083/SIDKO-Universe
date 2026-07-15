@@ -163,7 +163,7 @@ export default function Home() {
             <span className="text-muted-foreground block mt-1">{settings.heroText}</span>
           </h1>
           <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
-            Grade 11 student in Hetauda, Nepal — learning to build real things, think more clearly,
+            Grade 11 student in Hetauda, Nepal. Learning to build real things, think more clearly,
             and document the messy, honest process of growing up.
           </p>
           <div className="flex flex-wrap gap-3 items-center mb-10">
