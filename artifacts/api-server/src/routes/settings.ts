@@ -17,10 +17,10 @@ export interface SiteSettings {
 }
 
 const DEFAULT_SETTINGS: SiteSettings = {
-  heroText: 'Building things, breaking stuff.',
+  heroText: 'Figuring life out, one day at a time.',
   currentStatus: 'Coding something',
   currentMood: 'Focused',
-  currentGoal: 'Ship StudentHub Nepal',
+  currentGoal: 'Live a happy, meaningful life',
   statusEmoji: '💻',
 };
 

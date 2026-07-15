@@ -19,10 +19,10 @@ interface SiteSettings {
 }
 
 const DEFAULT_SETTINGS: SiteSettings = {
-  heroText: 'Building things, breaking stuff.',
+  heroText: 'Figuring life out, one day at a time.',
   currentStatus: 'Coding something',
   currentMood: 'Focused',
-  currentGoal: 'Ship StudentHub Nepal',
+  currentGoal: 'Live a happy, meaningful life',
   statusEmoji: '💻',
 };
 
@@ -150,8 +150,9 @@ export default function Home() {
             <span className="text-muted-foreground">{settings.heroText}</span>
           </h1>
           <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
-            Grade 11 student at Hetauda School of Management. Learning AI/ML. Building StudentHub Nepal.
-            This is not a portfolio. It's a living record of my life.
+            Grade 11 student in Hetauda, Nepal, trying to learn, build, and think a little more clearly
+            every day. This isn't a portfolio — it's a living record of my life, the things I'm figuring
+            out, and the person I'm becoming along the way.
           </p>
           <div className="flex flex-wrap gap-4 items-center">
             <Link

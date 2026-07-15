@@ -2,8 +2,8 @@ import React from 'react';
 import { Link, useLocation } from 'wouter';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Home, Image as ImageIcon, BookOpen, Newspaper, MapPin, Target,
-  Trophy, User, MessageCircle, MessageSquare, Users, BookMarked,
+  Home, Image as ImageIcon, BookOpen, Newspaper,
+  User, MessageCircle, MessageSquare, Users, BookMarked,
   X, GraduationCap, LayoutDashboard, LogOut
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -17,9 +17,6 @@ const navItems = [
   { path: '/memories',     icon: ImageIcon,     label: 'Memories' },
   { path: '/thoughts',     icon: BookOpen,      label: 'Thoughts' },
   { path: '/blog',         icon: Newspaper,     label: 'Sid Philosophy' },
-  { path: '/timeline',     icon: MapPin,        label: 'Timeline' },
-  { path: '/goals',        icon: Target,        label: 'Goals' },
-  { path: '/achievements', icon: Trophy,        label: 'Achievements' },
   { path: '/learning',     icon: GraduationCap, label: 'Learning' },
   { path: '/about',        icon: User,          label: 'About' },
   { path: '/anonymous',    icon: MessageSquare, label: 'NGL' },

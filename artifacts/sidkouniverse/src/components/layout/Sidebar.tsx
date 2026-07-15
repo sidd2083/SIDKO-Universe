@@ -3,8 +3,8 @@ import { Link, useLocation } from 'wouter';
 import { motion } from 'framer-motion';
 import {
   Home, Image as ImageIcon, BookOpen, PenTool, User,
-  Target, Award, MessageSquare, MessageCircle,
-  LogOut, MapPin, Clock, Sun, Moon, LayoutDashboard, GraduationCap, Users,
+  MessageSquare, MessageCircle,
+  LogOut, Sun, Moon, LayoutDashboard, GraduationCap, Users,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
@@ -20,9 +20,6 @@ const navItems = [
   { label: 'Memories',     path: '/memories',    icon: ImageIcon },
   { label: 'Thoughts',     path: '/thoughts',    icon: BookOpen },
   { label: 'Sid Philosophy', path: '/blog',        icon: PenTool },
-  { label: 'Timeline',     path: '/timeline',    icon: Clock },
-  { label: 'Goals',        path: '/goals',       icon: Target },
-  { label: 'Achievements', path: '/achievements',icon: Award },
   { label: 'Learning',     path: '/learning',    icon: GraduationCap },
   { label: 'About',        path: '/about',       icon: User },
   { label: 'NGL',          path: '/anonymous',   icon: MessageSquare },
