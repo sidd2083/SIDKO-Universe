@@ -7,7 +7,8 @@ import { Skeleton } from '@/components/shared/Skeleton';
 import { Link } from 'wouter';
 import { ArrowRight, Github, ExternalLink, Star, Zap, Globe, Mail } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { orderBy, limit } from 'firebase/firestore';
+import { orderBy, limit, where } from 'firebase/firestore';
+import { MessageSquare } from 'lucide-react';
 
 interface SiteSettings {
   heroText: string;
@@ -86,6 +87,11 @@ export default function Home() {
   ]);
   const { data: thoughts, loading: thoughtsLoading } = useFirestore<Thought>('thoughts', [
     orderBy('createdAt', 'desc'), limit(4),
+  ]);
+  const { data: nglMessages, loading: nglLoading } = useFirestore<any>('anonymous_messages', [
+    where('approved', '==', true),
+    orderBy('createdAt', 'desc'),
+    limit(3),
   ]);
 
   const emoji = inferEmoji(settings.currentStatus, settings.statusEmoji);
@@ -211,10 +217,13 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── Recent Thoughts ── */}
+      {/* ── Articles & Thinking ── */}
       <section className="mb-16">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold">Recent Thoughts</h2>
+          <div>
+            <h2 className="text-2xl font-bold">Articles & Thinking</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">thoughts, ideas, things on my mind</p>
+          </div>
           <Link href="/thoughts" className="text-sm font-medium text-primary hover:underline flex items-center gap-1">
             View All <ArrowRight className="w-4 h-4" />
           </Link>
@@ -226,7 +235,57 @@ export default function Home() {
             ? thoughts.map(t => <ThoughtCard key={t.id} thought={t} />)
             : (
               <div className="col-span-full text-center py-10 text-muted-foreground border border-dashed border-border rounded-2xl">
-                No thoughts written yet.
+                Nothing written yet — check back soon.
+              </div>
+            )}
+        </div>
+      </section>
+
+      {/* ── Recent NGL ── */}
+      <section className="mb-16">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-2xl font-bold">Recent NGL</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">anonymous questions people asked me</p>
+          </div>
+          <Link href="/anonymous" className="text-sm font-medium text-primary hover:underline flex items-center gap-1">
+            Ask me <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
+        <div className="space-y-3">
+          {nglLoading
+            ? Array(3).fill(0).map((_, i) => <Skeleton key={i} className="h-24 rounded-2xl" />)
+            : nglMessages.length > 0
+            ? nglMessages.map((msg: any) => (
+                <motion.div
+                  key={msg.id}
+                  whileHover={{ y: -1 }}
+                  className="bg-card border border-border rounded-2xl p-5 hover:shadow-sm transition-all"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                      <MessageSquare className="w-4 h-4 text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground leading-snug mb-2">
+                        {msg.question}
+                      </p>
+                      {msg.reply && (
+                        <div className="border-l-2 border-primary/30 pl-3">
+                          <p className="text-xs text-muted-foreground leading-relaxed">{msg.reply}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </motion.div>
+              ))
+            : (
+              <div className="text-center py-10 text-muted-foreground border border-dashed border-border rounded-2xl">
+                <MessageSquare className="w-6 h-6 mx-auto mb-2 opacity-40" />
+                <p className="text-sm">No questions yet.</p>
+                <Link href="/anonymous" className="text-xs text-primary hover:underline mt-1 inline-block">
+                  Be the first to ask something →
+                </Link>
               </div>
             )}
         </div>

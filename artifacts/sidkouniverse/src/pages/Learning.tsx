@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { PageWrapper } from '@/components/layout/PageWrapper';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { Brain, Code2, ChevronDown } from 'lucide-react';
+import { Brain, Code2, ChevronDown, AlertTriangle } from 'lucide-react';
 
 interface Topic {
   name: string;
@@ -70,7 +70,7 @@ const sections: Section[] = [
     id: 'python',
     icon: Code2,
     color: 'text-blue-400',
-    title: 'Python Libraries for AI/ML',
+    title: 'Python & AI Libraries',
     subtitle: 'The toolkit every ML engineer uses daily',
     topics: [
       {
@@ -81,44 +81,38 @@ const sections: Section[] = [
       },
       {
         name: 'Pandas',
-        desc: 'DataFrames, data cleaning, groupby, merging, handling missing values, CSV/Excel I/O.',
+        desc: 'DataFrames, data cleaning, groupby, merging, handling missing values.',
         why: 'Real-world data is messy. Pandas is how you clean, explore, and prepare it.',
         resources: ['Pandas documentation', 'Kaggle Pandas course (free)'],
       },
       {
         name: 'Matplotlib & Seaborn',
-        desc: 'Line plots, scatter plots, histograms, heatmaps, subplots, styling.',
-        why: 'You can\'t improve what you can\'t see. Visualizing data reveals patterns instantly.',
+        desc: 'Line plots, scatter plots, histograms, heatmaps, subplots.',
+        why: "You can't improve what you can't see. Visualizing data reveals patterns instantly.",
         resources: ['Matplotlib gallery', 'Seaborn tutorial'],
       },
       {
         name: 'Scikit-learn',
-        desc: 'Linear regression, decision trees, SVM, k-means, train/test split, cross-validation, metrics.',
+        desc: 'Linear regression, decision trees, SVM, k-means, train/test split, metrics.',
         why: 'Best library for classical ML. Consistent API — learn once, apply everywhere.',
         resources: ['Scikit-learn user guide', 'Hands-On Machine Learning (book)'],
       },
       {
         name: 'TensorFlow / Keras',
-        desc: 'Building neural networks, layers, activation functions, model training, callbacks.',
-        why: 'Google\'s deep learning framework. Keras makes building NNs feel like Lego blocks.',
+        desc: 'Building neural networks, layers, activation functions, model training.',
+        why: "Google's deep learning framework. Keras makes building NNs feel like Lego blocks.",
         resources: ['TensorFlow tutorials', 'Deep Learning with Python (Chollet)'],
       },
       {
         name: 'PyTorch',
         desc: 'Tensors, autograd, custom layers, training loops, GPU acceleration.',
-        why: 'Preferred in research. More flexible than Keras, great for understanding what\'s happening inside.',
+        why: 'Preferred in research. More flexible than Keras — great for understanding internals.',
         resources: ['PyTorch 60-minute blitz', 'fast.ai course (uses PyTorch)'],
-      },
-      {
-        name: 'OpenCV',
-        desc: 'Image reading/writing, resizing, color spaces, edge detection, contours, camera input.',
-        why: 'Essential for computer vision projects — face detection, object tracking, image preprocessing.',
-        resources: ['OpenCV Python tutorials', 'PyImageSearch blog'],
       },
       {
         name: 'Hugging Face Transformers',
         desc: 'Pre-trained LLMs, BERT, GPT, fine-tuning, tokenizers, pipelines.',
-        why: 'The go-to library for NLP and LLMs. Access to thousands of pre-trained models in 3 lines.',
+        why: 'The go-to library for NLP. Access to thousands of pre-trained models in 3 lines.',
         resources: ['HuggingFace course (free)', 'HuggingFace docs'],
       },
     ],
@@ -129,10 +123,7 @@ function TopicCard({ topic }: { topic: Topic }) {
   const [open, setOpen] = useState(false);
 
   return (
-    <motion.div
-      layout
-      className="bg-card border border-border rounded-2xl overflow-hidden"
-    >
+    <motion.div layout className="bg-card border border-border rounded-2xl overflow-hidden">
       <button
         onClick={() => setOpen(!open)}
         className="w-full flex items-center justify-between p-4 text-left gap-3"
@@ -189,10 +180,33 @@ export default function Learning() {
     <PageWrapper>
       <div className="max-w-3xl mx-auto py-8">
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
-          <h1 className="text-4xl font-bold mb-2">Learning</h1>
+          <h1 className="text-4xl font-bold mb-3">Learning</h1>
           <p className="text-muted-foreground">
-            My study map for AI & ML — what I'm learning and why each piece matters.
+            My study map for AI & ML — what I want to learn and why each piece matters.
           </p>
+        </motion.div>
+
+        {/* ── Honest confession ── */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="mb-8 rounded-2xl border border-amber-500/30 bg-amber-500/5 p-5"
+        >
+          <div className="flex gap-3">
+            <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+            <div>
+              <p className="font-semibold text-foreground text-sm mb-1.5">My honest problem with learning</p>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                I want to learn <em>everything</em>. Seriously — AI, ML, systems, math, design, business,
+                philosophy, physics. I get excited, I open 12 tabs, I bookmark 40 resources… and then I
+                don't execute. The list below isn't what I've mastered. It's what I <em>think</em> I
+                should learn, which is a very different thing. I'm working on the gap between planning
+                to learn and actually sitting down and doing it. If you struggle with the same thing,
+                you're not alone.
+              </p>
+            </div>
+          </div>
         </motion.div>
 
         {/* Tab switcher */}
@@ -200,7 +214,7 @@ export default function Learning() {
           {sections.map((s) => (
             <button
               key={s.id}
-              onClick={() => setActiveTab(s.id as any)}
+              onClick={() => setActiveTab(s.id as 'math' | 'python')}
               className={cn(
                 'flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all',
                 activeTab === s.id

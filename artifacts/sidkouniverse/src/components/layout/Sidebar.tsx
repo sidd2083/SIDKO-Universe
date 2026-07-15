@@ -53,12 +53,8 @@ export function Sidebar() {
   return (
     <aside className="hidden md:flex flex-col w-64 h-screen fixed top-0 left-0 border-r border-border bg-sidebar z-40">
       {/* Logo */}
-      <div className="flex items-center gap-3 px-5 py-5 border-b border-border">
+      <div className="flex items-center px-5 py-5 border-b border-border">
         <SidLogoIcon size="md" />
-        <div className="flex flex-col gap-0.5">
-          <SidWordmark className="text-sm" />
-          <p className="text-[10px] text-muted-foreground leading-none">Siddhant's digital life</p>
-        </div>
       </div>
 
       {/* Nav */}
