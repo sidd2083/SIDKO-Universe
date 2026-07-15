@@ -1,7 +1,7 @@
 {
   "framework": null,
-  "buildCommand": "pnpm install && pnpm --filter @workspace/api-server run build && pnpm --filter @workspace/sidkouniverse run build:vercel",
-  "outputDirectory": "artifacts/sidkouniverse/dist/public",
+  "buildCommand": "pnpm install && pnpm --filter @workspace/api-server run build && pnpm --filter @workspace/sidkouniverse run build:vercel && rm -rf public && cp -r artifacts/sidkouniverse/dist/public public",
+  "outputDirectory": "public",
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/server" },
     { "source": "/(.*)", "destination": "/index.html" }
