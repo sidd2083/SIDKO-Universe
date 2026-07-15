@@ -72,10 +72,26 @@ export default defineConfig({
     fs: {
       strict: true,
     },
+    proxy: {
+      // Forward API calls to the API Server workflow so the browser sees
+      // them as same-origin requests (this frontend and the API server run
+      // on different ports in dev). Same-origin means the browser will
+      // automatically send/receive the admin session cookie.
+      '/api': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+      },
+    },
   },
   preview: {
     port,
     host: '0.0.0.0',
     allowedHosts: true,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+      },
+    },
   },
 });
