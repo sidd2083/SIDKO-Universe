@@ -1,64 +1,75 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { PageWrapper } from '@/components/layout/PageWrapper';
-import { useFirestore } from '@/hooks/useFirestore';
-import { Skeleton } from '@/components/shared/Skeleton';
-import { PenTool, Clock } from 'lucide-react';
-import { orderBy, where } from 'firebase/firestore';
 import { Link } from 'wouter';
+import { motion } from 'framer-motion';
+import { BookOpen, Image as ImageIcon, PenTool } from 'lucide-react';
 import { format } from 'date-fns';
 
+interface Post { id: string; title: string; slug: string; excerpt: string; coverImage?: string; readingTime: number; createdAt: string; }
+
 export default function Blog() {
-  const { data: blogs, loading } = useFirestore<any>('blogs', [
-    where('published', '==', true),
-    orderBy('createdAt', 'desc')
-  ]);
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/posts')
+      .then(r => r.json())
+      .then(data => { setPosts(Array.isArray(data) ? data : []); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, []);
 
   return (
     <PageWrapper>
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-4xl font-bold mb-4">Sid Philosophy</h1>
-        <p className="text-muted-foreground text-lg mb-10">
-          Longer articles on tech, life, and building things.
-        </p>
+      <div className="max-w-3xl mx-auto py-8">
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="mb-10">
+          <div className="flex items-center gap-2 mb-3">
+            <PenTool className="w-4 h-4 text-primary" />
+            <span className="text-xs font-bold uppercase tracking-widest text-primary">Sid Philosophy</span>
+          </div>
+          <h1 className="text-4xl font-black mb-3">Philosophy & Writing</h1>
+          <p className="text-muted-foreground leading-relaxed">
+            Longer pieces. Things I've thought about enough to write down. Not advice — just how I see things.
+          </p>
+        </motion.div>
 
         {loading ? (
-          <div className="grid md:grid-cols-2 gap-6">
-            {Array(4).fill(0).map((_, i) => <Skeleton key={i} className="h-64 rounded-2xl" />)}
+          <div className="space-y-5">
+            {[1, 2, 3].map(i => <div key={i} className="h-48 bg-card border border-border rounded-2xl animate-pulse" />)}
           </div>
-        ) : blogs.length > 0 ? (
-          <div className="grid md:grid-cols-2 gap-6">
-            {blogs.map(blog => (
-              <Link key={blog.id} href={`/blog/${blog.slug}`}>
-                <div className="group cursor-pointer rounded-2xl overflow-hidden bg-card border border-border shadow-sm hover:shadow-md transition-all flex flex-col h-full">
-                  <div className="aspect-[2/1] w-full bg-muted overflow-hidden relative">
-                    {blog.coverImage ? (
-                      <img src={blog.coverImage} alt={blog.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <PenTool className="w-8 h-8 text-muted-foreground/30" />
-                      </div>
-                    )}
-                  </div>
-                  <div className="p-5 flex-1 flex flex-col">
-                    <h3 className="text-xl font-bold text-foreground mb-2 group-hover:text-primary transition-colors line-clamp-2">{blog.title}</h3>
-                    <p className="text-sm text-muted-foreground line-clamp-2 mb-4 flex-1">{blog.excerpt || 'Read the full article to learn more.'}</p>
-                    <div className="flex items-center gap-4 text-xs font-medium text-muted-foreground pt-4 border-t border-border/50">
-                      <span>{blog.createdAt ? format(blog.createdAt.toDate(), 'MMM d, yyyy') : ''}</span>
-                      <div className="flex items-center gap-1">
-                        <Clock className="w-3.5 h-3.5" />
-                        <span>{blog.readingTime || 5} min read</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </Link>
-            ))}
+        ) : posts.length === 0 ? (
+          <div className="text-center py-16 border border-dashed border-border rounded-2xl text-muted-foreground">
+            <PenTool className="w-8 h-8 mx-auto mb-3 opacity-30" />
+            <p className="mb-1">Nothing published yet.</p>
+            <p className="text-xs">Come back soon — ideas take time.</p>
           </div>
         ) : (
-          <div className="text-center py-16 border border-dashed border-border rounded-2xl bg-card/20">
-            <PenTool className="w-10 h-10 text-muted-foreground mx-auto mb-4" />
-            <p className="text-foreground font-medium mb-1">No articles yet</p>
-            <p className="text-sm text-muted-foreground">Writing is in progress.</p>
+          <div className="space-y-5">
+            {posts.map((p, i) => (
+              <motion.div key={p.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }}>
+                <Link href={`/blog/${p.id}`}>
+                  <motion.div whileHover={{ y: -2 }}
+                    className="bg-card border border-border rounded-2xl overflow-hidden hover:shadow-md transition-all cursor-pointer group flex gap-0">
+                    {p.coverImage && (
+                      <div className="w-40 shrink-0 overflow-hidden bg-muted hidden sm:block">
+                        <img src={p.coverImage} alt={p.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                      </div>
+                    )}
+                    <div className="flex-1 p-6">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                          <BookOpen className="w-3.5 h-3.5" />
+                          {p.readingTime || 5} min read
+                        </div>
+                        <span className="text-xs text-muted-foreground">{format(new Date(p.createdAt), 'MMM d, yyyy')}</span>
+                      </div>
+                      <h2 className="text-xl font-bold text-foreground mb-2 group-hover:text-primary transition-colors leading-snug">{p.title}</h2>
+                      <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">{p.excerpt}</p>
+                      <p className="text-xs font-semibold text-primary mt-4">Read article →</p>
+                    </div>
+                  </motion.div>
+                </Link>
+              </motion.div>
+            ))}
           </div>
         )}
       </div>

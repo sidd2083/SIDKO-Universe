@@ -54,7 +54,7 @@ export function ThoughtCard({ thought, className }: ThoughtCardProps) {
 
         <div className="flex items-center justify-between pt-4 border-t border-border/50">
           <p className="text-xs text-muted-foreground font-medium">
-            {thought.createdAt ? format(thought.createdAt.toDate ? thought.createdAt.toDate() : new Date(), 'MMM d, yyyy') : 'Recently'}
+            {thought.createdAt ? format(typeof thought.createdAt === 'string' ? new Date(thought.createdAt) : (thought.createdAt.toDate ? thought.createdAt.toDate() : new Date(thought.createdAt)), 'MMM d, yyyy') : 'Recently'}
           </p>
           <LikeButton liked={false} count={thought.likesCount || 0} onClick={(e) => { e.preventDefault(); e.stopPropagation(); }} />
         </div>

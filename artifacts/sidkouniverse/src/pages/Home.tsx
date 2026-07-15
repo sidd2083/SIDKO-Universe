@@ -1,14 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { PageWrapper } from '@/components/layout/PageWrapper';
-import { useFirestore } from '@/hooks/useFirestore';
 import { MemoryCard, Memory } from '@/components/cards/MemoryCard';
 import { ThoughtCard, Thought } from '@/components/cards/ThoughtCard';
 import { Skeleton } from '@/components/shared/Skeleton';
 import { Link } from 'wouter';
-import { ArrowRight, Github, ExternalLink, Star, Zap, Globe, Mail } from 'lucide-react';
+import { ArrowRight, Github, ExternalLink, Star, Zap, Globe, MessageSquare } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { orderBy, limit, where } from 'firebase/firestore';
-import { MessageSquare } from 'lucide-react';
 
 interface SiteSettings {
   heroText: string;
@@ -66,6 +63,12 @@ export default function Home() {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [settings, setSettings] = useState<SiteSettings>(DEFAULT_SETTINGS);
   const [settingsLoaded, setSettingsLoaded] = useState(false);
+  const [memories, setMemories] = useState<Memory[]>([]);
+  const [memoriesLoading, setMemoriesLoading] = useState(true);
+  const [thoughts, setThoughts] = useState<Thought[]>([]);
+  const [thoughtsLoading, setThoughtsLoading] = useState(true);
+  const [nglMessages, setNglMessages] = useState<any[]>([]);
+  const [nglLoading, setNglLoading] = useState(true);
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -75,24 +78,18 @@ export default function Home() {
   useEffect(() => {
     fetch('/api/settings')
       .then(r => r.json())
-      .then((data: Partial<SiteSettings>) => {
-        setSettings({ ...DEFAULT_SETTINGS, ...data });
-        setSettingsLoaded(true);
-      })
+      .then((data: Partial<SiteSettings>) => { setSettings({ ...DEFAULT_SETTINGS, ...data }); setSettingsLoaded(true); })
       .catch(() => setSettingsLoaded(true));
+    fetch('/api/memories')
+      .then(r => r.json()).then(d => { setMemories(Array.isArray(d) ? d.slice(0, 8) : []); setMemoriesLoading(false); })
+      .catch(() => setMemoriesLoading(false));
+    fetch('/api/thoughts')
+      .then(r => r.json()).then(d => { setThoughts(Array.isArray(d) ? d.slice(0, 4) : []); setThoughtsLoading(false); })
+      .catch(() => setThoughtsLoading(false));
+    fetch('/api/ngl')
+      .then(r => r.json()).then(d => { setNglMessages(Array.isArray(d) ? d.slice(0, 3) : []); setNglLoading(false); })
+      .catch(() => setNglLoading(false));
   }, []);
-
-  const { data: memories, loading: memoriesLoading } = useFirestore<Memory>('memories', [
-    orderBy('createdAt', 'desc'), limit(8),
-  ]);
-  const { data: thoughts, loading: thoughtsLoading } = useFirestore<Thought>('thoughts', [
-    orderBy('createdAt', 'desc'), limit(4),
-  ]);
-  const { data: nglMessages, loading: nglLoading } = useFirestore<any>('anonymous_messages', [
-    where('approved', '==', true),
-    orderBy('createdAt', 'desc'),
-    limit(3),
-  ]);
 
   const emoji = inferEmoji(settings.currentStatus, settings.statusEmoji);
 

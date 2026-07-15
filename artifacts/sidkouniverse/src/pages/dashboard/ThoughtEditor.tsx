@@ -2,200 +2,150 @@ import React, { useEffect, useState } from 'react';
 import { PageWrapper } from '@/components/layout/PageWrapper';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLocation } from 'wouter';
-import { orderBy } from 'firebase/firestore';
-import { addFirestoreDoc, updateFirestoreDoc, deleteFirestoreDoc, SERVER_TIMESTAMP } from '@/lib/firestoreApi';
-import { useFirestore } from '@/hooks/useFirestore';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Save, Trash2, Globe } from 'lucide-react';
+import { Loader2, Globe, FileText } from 'lucide-react';
 import { format } from 'date-fns';
+
+interface Thought { id: string; title: string; content: string; mood: string; tags: string[]; readingTime: number; published: boolean; createdAt: string; }
 
 export default function ThoughtEditor() {
   const { isAdmin, isLoading } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  
-  const { data: thoughts } = useFirestore<any>('thoughts', [orderBy('createdAt', 'desc')]);
-
+  const [thoughts, setThoughts] = useState<Thought[]>([]);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [mood, setMood] = useState('Thinking');
   const [tags, setTags] = useState('');
-  const [readingTime, setReadingTime] = useState(2);
-  
   const [isSaving, setIsSaving] = useState(false);
 
+  const load = () => {
+    fetch('/api/thoughts/all', { credentials: 'include' })
+      .then(r => r.json())
+      .then(data => { if (Array.isArray(data)) setThoughts(data); })
+      .catch(() => {});
+  };
+
   useEffect(() => {
-    if (!isLoading && !isAdmin) {
-      setLocation('/');
-    }
+    if (!isLoading && !isAdmin) setLocation('/');
+    else if (isAdmin) load();
   }, [isAdmin, isLoading, setLocation]);
 
   if (isLoading || !isAdmin) return null;
 
-  const handleSave = async (e: React.FormEvent, published: boolean) => {
-    e.preventDefault();
-    if (!title || !content) return;
-
+  const handleSave = async (published: boolean) => {
+    if (!title.trim() || !content.trim()) { toast({ title: 'Title and content required', variant: 'destructive' }); return; }
     setIsSaving(true);
     try {
-      await addFirestoreDoc('thoughts', {
-        title,
-        content,
-        mood,
-        tags: tags.split(',').map(t => t.trim()).filter(Boolean),
-        readingTime: Number(readingTime),
-        published,
-        likesCount: 0,
-        commentsCount: 0,
-        createdAt: SERVER_TIMESTAMP,
+      const res = await fetch('/api/thoughts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          title: title.trim(),
+          content: content.trim(),
+          mood,
+          tags: tags.split(',').map(t => t.trim()).filter(Boolean),
+          readingTime: Math.max(1, Math.ceil(content.length / 1000)),
+          published,
+        }),
       });
-
-      setTitle('');
-      setContent('');
-      setTags('');
-      toast({ title: published ? 'Thought published!' : 'Draft saved' });
-    } catch (err) {
-      toast({ title: 'Failed to save thought', variant: 'destructive' });
+      if (!res.ok) throw new Error('Failed');
+      setTitle(''); setContent(''); setTags('');
+      toast({ title: published ? '🚀 Published!' : '📝 Draft saved' });
+      load();
+    } catch {
+      toast({ title: 'Failed to save', variant: 'destructive' });
     } finally {
       setIsSaving(false);
     }
   };
 
+  const handleTogglePublish = async (t: Thought) => {
+    try {
+      await fetch(`/api/thoughts/${t.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ published: !t.published }),
+      });
+      toast({ title: t.published ? 'Unpublished' : 'Published' });
+      load();
+    } catch { toast({ title: 'Failed', variant: 'destructive' }); }
+  };
+
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this thought?')) return;
     try {
-      await deleteFirestoreDoc('thoughts', id);
-      toast({ title: 'Thought deleted' });
-    } catch (err) {
-      toast({ title: 'Failed to delete thought', variant: 'destructive' });
-    }
-  };
-
-  const handleTogglePublish = async (id: string, currentlyPublished: boolean) => {
-    try {
-      await updateFirestoreDoc('thoughts', id, { published: !currentlyPublished });
-      toast({ title: currentlyPublished ? 'Unpublished' : 'Published' });
-    } catch (err) {
-      toast({ title: 'Failed to update status', variant: 'destructive' });
-    }
+      await fetch(`/api/thoughts/${id}`, { method: 'DELETE', credentials: 'include' });
+      toast({ title: 'Deleted' });
+      load();
+    } catch { toast({ title: 'Failed to delete', variant: 'destructive' }); }
   };
 
   return (
     <PageWrapper>
       <div className="max-w-6xl mx-auto py-8">
         <h1 className="text-3xl font-bold mb-8">Thought Editor</h1>
-
         <div className="grid lg:grid-cols-2 gap-8">
-          <div>
-            <form className="bg-card border border-border rounded-3xl p-6 shadow-sm flex flex-col h-[70vh]">
-              <div className="mb-4 space-y-4">
-                <input
-                  type="text"
-                  placeholder="Thought Title"
-                  value={title}
-                  onChange={e => setTitle(e.target.value)}
-                  className="w-full bg-transparent border-b border-border px-2 py-3 text-2xl font-bold focus:outline-none focus:border-primary/50 text-foreground"
-                  required
-                />
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-medium text-muted-foreground mb-1">Mood</label>
-                    <select
-                      value={mood}
-                      onChange={e => setMood(e.target.value)}
-                      className="w-full bg-background border border-border rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary/50 text-foreground"
-                    >
-                      {['Thinking', 'Happy', 'Frustrated', 'Inspired', 'Tired'].map(m => (
-                        <option key={m} value={m}>{m}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-muted-foreground mb-1">Read Time (min)</label>
-                    <input
-                      type="number"
-                      value={readingTime}
-                      onChange={e => setReadingTime(Number(e.target.value))}
-                      className="w-full bg-background border border-border rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary/50 text-foreground"
-                    />
-                  </div>
-                </div>
+          {/* Editor */}
+          <div className="bg-card border border-border rounded-2xl p-6 shadow-sm flex flex-col h-[70vh]">
+            <input type="text" placeholder="Thought Title" value={title} onChange={e => setTitle(e.target.value)}
+              className="w-full bg-transparent border-b border-border py-3 text-2xl font-bold focus:outline-none focus:border-primary/50 text-foreground mb-4" />
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">Mood</label>
+                <select value={mood} onChange={e => setMood(e.target.value)}
+                  className="w-full bg-background border border-border rounded-xl px-3 py-2 focus:outline-none text-foreground text-sm">
+                  {['Thinking', 'Happy', 'Frustrated', 'Inspired', 'Tired', 'Motivated'].map(m => <option key={m}>{m}</option>)}
+                </select>
               </div>
-
-              <textarea
-                placeholder="Write your thought here... (Markdown supported)"
-                value={content}
-                onChange={e => setContent(e.target.value)}
-                className="w-full flex-1 bg-transparent border-none resize-none focus:outline-none text-foreground leading-relaxed custom-scrollbar mb-4"
-                required
-              />
-
-              <div className="pt-4 border-t border-border flex items-center justify-between gap-4">
-                <input
-                  type="text"
-                  placeholder="Tags (comma separated)"
-                  value={tags}
-                  onChange={e => setTags(e.target.value)}
-                  className="flex-1 bg-background border border-border rounded-xl px-4 py-2 focus:outline-none text-sm text-foreground"
-                />
-                <div className="flex gap-2 shrink-0">
-                  <button
-                    type="button"
-                    onClick={e => handleSave(e, false)}
-                    disabled={isSaving || !title || !content}
-                    className="flex items-center gap-2 bg-muted text-foreground px-4 py-2 rounded-xl font-medium hover:bg-muted/80 transition-colors disabled:opacity-50"
-                  >
-                    Save Draft
-                  </button>
-                  <button
-                    type="button"
-                    onClick={e => handleSave(e, true)}
-                    disabled={isSaving || !title || !content}
-                    className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-xl font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
-                  >
-                    Publish <Globe className="w-4 h-4" />
-                  </button>
-                </div>
+              <div>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">Tags (comma separated)</label>
+                <input value={tags} onChange={e => setTags(e.target.value)} placeholder="life, code, ..."
+                  className="w-full bg-background border border-border rounded-xl px-3 py-2 focus:outline-none text-foreground text-sm" />
               </div>
-            </form>
+            </div>
+            <textarea placeholder="Write your thought... (Markdown supported)" value={content} onChange={e => setContent(e.target.value)}
+              className="flex-1 bg-transparent resize-none focus:outline-none text-foreground leading-relaxed text-sm mb-4 border-t border-border pt-4" />
+            <div className="flex gap-2 pt-4 border-t border-border shrink-0">
+              <button onClick={() => handleSave(false)} disabled={isSaving || !title || !content}
+                className="flex-1 flex items-center justify-center gap-2 bg-muted text-foreground px-4 py-2.5 rounded-xl font-medium text-sm hover:bg-muted/80 disabled:opacity-50">
+                <FileText className="w-4 h-4" /> Save Draft
+              </button>
+              <button onClick={() => handleSave(true)} disabled={isSaving || !title || !content}
+                className="flex-1 flex items-center justify-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-xl font-medium text-sm hover:opacity-90 disabled:opacity-50">
+                {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Globe className="w-4 h-4" />}
+                Publish
+              </button>
+            </div>
           </div>
 
-          <div>
-            <div className="bg-card border border-border rounded-3xl p-6 shadow-sm h-[70vh] flex flex-col">
-              <h2 className="font-bold mb-6 text-xl">All Thoughts</h2>
-              <div className="space-y-4 overflow-y-auto flex-1 custom-scrollbar pr-2">
-                {thoughts?.map(thought => (
-                  <div key={thought.id} className="bg-background border border-border rounded-2xl p-4 flex flex-col">
-                    <div className="flex justify-between items-start mb-2">
-                      <h3 className="font-bold">{thought.title}</h3>
-                      <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded ${thought.published ? 'bg-success/20 text-success' : 'bg-muted text-muted-foreground'}`}>
-                        {thought.published ? 'Published' : 'Draft'}
-                      </span>
-                    </div>
-                    <p className="text-sm text-muted-foreground line-clamp-2 mb-4">{thought.content}</p>
-                    <div className="flex items-center justify-between mt-auto pt-3 border-t border-border">
-                      <span className="text-xs text-muted-foreground">
-                        {thought.createdAt ? format(thought.createdAt.toDate(), 'MMM d, yyyy') : ''}
-                      </span>
-                      <div className="flex items-center gap-2">
-                        <button 
-                          onClick={() => handleTogglePublish(thought.id, thought.published)}
-                          className="text-xs font-medium hover:underline text-foreground"
-                        >
-                          {thought.published ? 'Unpublish' : 'Publish'}
-                        </button>
-                        <span className="text-border">•</span>
-                        <button 
-                          onClick={() => handleDelete(thought.id)}
-                          className="text-destructive text-xs font-medium hover:underline"
-                        >
-                          Delete
-                        </button>
-                      </div>
+          {/* List */}
+          <div className="bg-card border border-border rounded-2xl p-6 shadow-sm h-[70vh] flex flex-col">
+            <h2 className="font-bold text-xl mb-5">All Thoughts ({thoughts.length})</h2>
+            <div className="space-y-3 overflow-y-auto flex-1 pr-1">
+              {thoughts.length === 0 && <p className="text-sm text-muted-foreground text-center py-8">No thoughts yet.</p>}
+              {thoughts.map(t => (
+                <div key={t.id} className="bg-background border border-border rounded-xl p-4">
+                  <div className="flex justify-between items-start mb-1 gap-2">
+                    <h3 className="font-semibold text-sm leading-tight">{t.title}</h3>
+                    <span className={`shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-md ${t.published ? 'bg-green-500/15 text-green-600 dark:text-green-400' : 'bg-muted text-muted-foreground'}`}>
+                      {t.published ? 'Live' : 'Draft'}
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground line-clamp-1 mb-3">{t.content.slice(0, 80)}…</p>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-muted-foreground">{format(new Date(t.createdAt), 'MMM d, yyyy')}</span>
+                    <div className="flex gap-3 text-xs font-medium">
+                      <button onClick={() => handleTogglePublish(t)} className="hover:underline text-foreground">
+                        {t.published ? 'Unpublish' : 'Publish'}
+                      </button>
+                      <button onClick={() => handleDelete(t.id)} className="text-destructive hover:underline">Delete</button>
                     </div>
                   </div>
-                ))}
-              </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
