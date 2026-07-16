@@ -51,15 +51,8 @@ router.get('/uploads/:filename', (req, res): void => {
   res.sendFile(filePath);
 });
 
-/** Upload a file — admin only */
-router.post('/upload', (req, res, next) => {
-  const token = req.cookies?.[ADMIN_COOKIE_NAME] as string | undefined;
-  if (!isValidSessionToken(token)) {
-    res.status(401).json({ error: 'Admin session required' });
-    return;
-  }
-  next();
-}, upload.single('file'), (req, res): void => {
+/** Upload a file */
+router.post('/upload', upload.single('file'), (req, res): void => {
   if (!req.file) {
     res.status(400).json({ error: 'No file received' });
     return;
