@@ -44,44 +44,47 @@ router.post("/auth/google", authLimiter, async (req, res): Promise<void> => {
     return;
   }
 
-  // Verify the ID token using Google's public tokeninfo endpoint.
-  // This requires zero credentials — Google validates the signature server-side.
+  // Verify the Firebase ID token using Firebase's accounts:lookup REST API.
+  // Firebase ID tokens are NOT standard OAuth2 tokens — they cannot be verified
+  // by oauth2.googleapis.com/tokeninfo. The correct endpoint is identitytoolkit,
+  // which only requires the public Web API key (not a service account).
   let tokenEmail: string;
+  const firebaseApiKey = process.env.VITE_FIREBASE_API_KEY;
+  if (!firebaseApiKey) {
+    req.log.error("VITE_FIREBASE_API_KEY env var is not set");
+    res.status(503).json({ error: "Server Firebase config missing." });
+    return;
+  }
   try {
     const verifyRes = await fetch(
-      `https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(idToken)}`,
+      `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${firebaseApiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idToken }),
+      },
     );
-    if (!verifyRes.ok) {
-      req.log.warn({ status: verifyRes.status }, "Google tokeninfo rejected token");
+    const data = (await verifyRes.json()) as Record<string, unknown>;
+
+    if (!verifyRes.ok || data.error) {
+      req.log.warn({ status: verifyRes.status, err: data.error }, "Firebase token lookup failed");
       res.status(401).json({ error: "Invalid or expired Google token." });
       return;
     }
-    const claims = (await verifyRes.json()) as Record<string, string>;
 
-    // Basic audience check — must be our Firebase project
-    const expectedProjectId = process.env.FIREBASE_PROJECT_ID;
-    if (expectedProjectId && claims.aud !== expectedProjectId) {
-      // Firebase ID tokens use the project ID as the audience
-      // (web app client tokens use the numeric app ID — accept both)
-      const appId = process.env.VITE_FIREBASE_APP_ID ?? "";
-      if (claims.aud !== appId) {
-        req.log.warn({ aud: claims.aud }, "Token audience mismatch");
-        res.status(401).json({ error: "Token is not for this project." });
-        return;
-      }
-    }
-
-    if (!claims.email) {
+    const users = data.users as Array<Record<string, unknown>> | undefined;
+    const user = users?.[0];
+    if (!user?.email) {
       res.status(401).json({ error: "Google account has no email." });
       return;
     }
-    if (claims.email_verified !== "true") {
+    if (!user.emailVerified) {
       res.status(401).json({ error: "Google email is not verified." });
       return;
     }
-    tokenEmail = claims.email.toLowerCase();
+    tokenEmail = (user.email as string).toLowerCase();
   } catch (err) {
-    req.log.error({ err }, "Failed to contact Google tokeninfo endpoint");
+    req.log.error({ err }, "Failed to contact Firebase identitytoolkit");
     res.status(500).json({ error: "Could not verify token. Try again." });
     return;
   }

@@ -5,7 +5,7 @@ import { Loader2, ShieldCheck } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { getGetAdminSessionQueryKey } from '@workspace/api-client-react';
-import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import { signInWithRedirect, getRedirectResult, GoogleAuthProvider } from 'firebase/auth';
 import { auth, isFirebaseConfigured } from '@/lib/firebase';
 
 function GoogleIcon() {
@@ -21,7 +21,7 @@ function GoogleIcon() {
 
 export default function AdminLogin() {
   const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // start true — checking redirect result
   const [, setLocation] = useLocation();
   const { isAdmin, isLoading: authLoading } = useAuth();
   const queryClient = useQueryClient();
@@ -32,6 +32,69 @@ export default function AdminLogin() {
       setLocation('/dashboard');
     }
   }, [isAdmin, authLoading, setLocation]);
+
+  // On every page load, check whether we just came back from a Google redirect.
+  // signInWithRedirect stores pending auth state in localStorage before navigating;
+  // getRedirectResult picks it up here and completes the flow.
+  useEffect(() => {
+    if (!auth || !isFirebaseConfigured) {
+      setIsLoading(false);
+      return;
+    }
+
+    getRedirectResult(auth)
+      .then(async (result) => {
+        if (!result) {
+          // No pending redirect — normal page load, just show the button.
+          setIsLoading(false);
+          return;
+        }
+
+        // We have an auth result from the redirect. Send the ID token to the server.
+        try {
+          const idToken = await result.user.getIdToken();
+          const response = await fetch('/api/auth/google', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ idToken }),
+          });
+
+          if (!response.ok) {
+            const data = await response.json().catch(() => ({}));
+            await auth.signOut();
+            if (response.status === 403) {
+              setError('That Google account is not authorized to access this panel.');
+            } else {
+              setError((data as any).error || 'Sign-in failed. Try again.');
+            }
+            setIsLoading(false);
+            return;
+          }
+
+          await queryClient.invalidateQueries({ queryKey: getGetAdminSessionQueryKey() });
+          setLocation('/dashboard');
+        } catch (fetchErr: any) {
+          console.error('[AdminLogin] server fetch error:', fetchErr);
+          await auth.signOut().catch(() => {});
+          setError('Could not reach the server. Try again.');
+          setIsLoading(false);
+        }
+      })
+      .catch((err: any) => {
+        console.error('[AdminLogin] redirect result error:', err?.code, err?.message, err);
+        setIsLoading(false);
+        if (err?.code === 'auth/unauthorized-domain') {
+          setError(
+            'This domain is not authorised in Firebase. Go to Firebase Console → Authentication → Settings → Authorised domains and add the current URL\'s domain.',
+          );
+        } else if (err?.code) {
+          setError(`Sign-in failed (${err.code}). Try again.`);
+        } else {
+          setError(`Sign-in failed: ${err?.message || 'Unknown error'}. Try again.`);
+        }
+      });
+  }, []);
 
   const handleGoogleSignIn = async () => {
     if (!isFirebaseConfigured || !auth) {
@@ -44,54 +107,15 @@ export default function AdminLogin() {
 
     try {
       const provider = new GoogleAuthProvider();
-      // Force account picker so the user can always choose the right Gmail
+      // Force account picker so the right Gmail is always selected
       provider.setCustomParameters({ prompt: 'select_account' });
-
-      const result = await signInWithPopup(auth, provider);
-      const idToken = await result.user.getIdToken();
-
-      // Send the ID token to our API — credentials are verified server-side.
-      // No username/password ever travels over the wire.
-      const response = await fetch('/api/auth/google', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ idToken }),
-      });
-
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        // Sign the Firebase user back out since the server rejected the access
-        await auth.signOut();
-        if (response.status === 403) {
-          setError('That Google account is not authorized to access this panel.');
-        } else {
-          setError((data as any).error || 'Sign-in failed. Try again.');
-        }
-        return;
-      }
-
-      await queryClient.invalidateQueries({ queryKey: getGetAdminSessionQueryKey() });
-      setLocation('/dashboard');
+      // signInWithRedirect navigates the page to Google — no popup needed.
+      // getRedirectResult() at the top of this component handles the return.
+      await signInWithRedirect(auth, provider);
     } catch (err: any) {
-      console.error('[AdminLogin] sign-in error:', err?.code, err?.message, err);
-      // User closed the popup or cancelled — no error needed
-      if (
-        err?.code === 'auth/popup-closed-by-user' ||
-        err?.code === 'auth/cancelled-popup-request'
-      ) {
-        return;
-      }
-      if (err?.code === 'auth/popup-blocked') {
-        setError('Popup was blocked. Allow popups for this site and try again.');
-      } else if (err?.code === 'auth/unauthorized-domain') {
-        setError('This domain is not authorised in Firebase. Add it under Authentication → Settings → Authorised domains.');
-      } else {
-        // Show the real Firebase error code so it's debuggable
-        setError(`Sign-in failed${err?.code ? ` (${err.code})` : ''}. Try again.`);
-      }
-    } finally {
+      console.error('[AdminLogin] redirect initiation error:', err);
       setIsLoading(false);
+      setError('Could not start sign-in. Try again.');
     }
   };
 
