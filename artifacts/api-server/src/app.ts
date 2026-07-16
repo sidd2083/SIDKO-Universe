@@ -21,6 +21,10 @@ if (!fs.existsSync(UPLOADS_DIR)) {
 
 const app: Express = express();
 
+// Trust the Replit / reverse-proxy X-Forwarded-For header so that
+// express-rate-limit can identify real client IPs correctly.
+app.set("trust proxy", 1);
+
 // Security headers: removes X-Powered-By, sets X-Frame-Options, X-Content-Type-Options,
 // Referrer-Policy, etc. CSP is disabled — the frontend (Vite) manages its own.
 app.use(
