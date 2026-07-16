@@ -3,13 +3,17 @@ import { getFirestore, type Firestore } from 'firebase/firestore';
 import { getStorage, type FirebaseStorage } from 'firebase/storage';
 import { getAuth, type Auth } from 'firebase/auth';
 
+// Firebase client config is intentionally public — security is enforced
+// via Firebase Security Rules and server-side token verification, not by
+// hiding these values. Env vars override for flexibility; hardcoded values
+// are the safe fallback so the app always initialises in dev/preview.
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  apiKey:            import.meta.env.VITE_FIREBASE_API_KEY            || 'AIzaSyCw3Rx0pIDnEk1WDKLOpffax5BPD6C9Psk',
+  authDomain:        import.meta.env.VITE_FIREBASE_AUTH_DOMAIN        || 'sidhub-a359f.firebaseapp.com',
+  projectId:         import.meta.env.VITE_FIREBASE_PROJECT_ID         || 'sidhub-a359f',
+  storageBucket:     import.meta.env.VITE_FIREBASE_STORAGE_BUCKET     || 'sidhub-a359f.firebasestorage.app',
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '482346208574',
+  appId:             import.meta.env.VITE_FIREBASE_APP_ID             || '1:482346208574:web:2a5f3149389aa6e391306f',
 };
 
 // Firebase is configured when the minimum required fields are present.
