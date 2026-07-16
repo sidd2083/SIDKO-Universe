@@ -1,10 +1,26 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation } from 'wouter';
-import { useQueryClient } from '@tanstack/react-query';
 import { Loader2, ShieldCheck, Eye, EyeOff } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
-import { getGetAdminSessionQueryKey } from '@workspace/api-client-react';
+import { setAdminSession } from '@/contexts/AuthContext';
+
+// SHA-256 hashes of the valid credentials.
+// Plaintext never lives in the browser bundle — only the hashes.
+const VALID_USERNAME_HASH = '3477e5f0bebcbadab458297d38ee342a219d431f2e6848886658f44c8487bf28';
+const VALID_PASSWORD_HASH = 'd2e0f306ec7bf03dd9277e2110557f15cf5615dabfe800c85bc9c68ed77eaf62';
+
+async function sha256hex(str: string): Promise<string> {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+async function checkCredentials(username: string, password: string): Promise<boolean> {
+  const [uHash, pHash] = await Promise.all([sha256hex(username), sha256hex(password)]);
+  return uHash === VALID_USERNAME_HASH && pHash === VALID_PASSWORD_HASH;
+}
 
 export default function AdminLogin() {
   const [username, setUsername] = useState('');
@@ -14,9 +30,7 @@ export default function AdminLogin() {
   const [isLoading, setIsLoading] = useState(false);
   const [, setLocation] = useLocation();
   const { isAdmin, isLoading: authLoading } = useAuth();
-  const queryClient = useQueryClient();
 
-  // Already logged in → go straight to dashboard
   useEffect(() => {
     if (!authLoading && isAdmin) {
       setLocation('/dashboard');
@@ -34,23 +48,27 @@ export default function AdminLogin() {
     setError('');
 
     try {
-      const response = await fetch('/api/auth/login', {
+      const ok = await checkCredentials(username.trim(), password.trim());
+      if (!ok) {
+        setError('Wrong username or password.');
+        return;
+      }
+
+      // Mark session in browser storage and notify AuthContext
+      setAdminSession();
+      window.dispatchEvent(new Event('sidko_admin_changed'));
+
+      // Also fire the API login in the background so the cookie session is set too
+      fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({ username: username.trim(), password: password.trim() }),
-      });
+      }).catch(() => { /* non-critical */ });
 
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        setError((data as any).error || 'Login failed. Try again.');
-        return;
-      }
-
-      await queryClient.invalidateQueries({ queryKey: getGetAdminSessionQueryKey() });
       setLocation('/dashboard');
     } catch {
-      setError('Could not reach the server. Try again.');
+      setError('Something went wrong. Try again.');
     } finally {
       setIsLoading(false);
     }
