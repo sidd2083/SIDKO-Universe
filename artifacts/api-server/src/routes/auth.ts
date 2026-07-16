@@ -37,8 +37,19 @@ router.post("/auth/login", authLimiter, (req, res): void => {
     return;
   }
 
+  // Log whether env vars are configured (never logs the values themselves)
+  const adminUsernameSet = !!process.env.ADMIN_USERNAME;
+  const adminPasswordSet = !!process.env.ADMIN_PASSWORD;
+  req.log.info({ adminUsernameSet, adminPasswordSet }, "admin login attempt");
+
+  if (!adminUsernameSet || !adminPasswordSet) {
+    req.log.error("ADMIN_USERNAME or ADMIN_PASSWORD env var is not set — check Vercel environment variables");
+    res.status(503).json({ error: "Admin login is not configured on this server. Set ADMIN_USERNAME and ADMIN_PASSWORD environment variables." });
+    return;
+  }
+
   if (!verifyCredentials(username, password)) {
-    // Always return 401 — never hint which field was wrong.
+    req.log.warn("admin login rejected: wrong credentials");
     res.status(401).json({ error: "Invalid credentials." });
     return;
   }
