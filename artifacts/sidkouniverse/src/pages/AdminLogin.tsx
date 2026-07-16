@@ -74,6 +74,7 @@ export default function AdminLogin() {
       await queryClient.invalidateQueries({ queryKey: getGetAdminSessionQueryKey() });
       setLocation('/dashboard');
     } catch (err: any) {
+      console.error('[AdminLogin] sign-in error:', err?.code, err?.message, err);
       // User closed the popup or cancelled — no error needed
       if (
         err?.code === 'auth/popup-closed-by-user' ||
@@ -83,8 +84,11 @@ export default function AdminLogin() {
       }
       if (err?.code === 'auth/popup-blocked') {
         setError('Popup was blocked. Allow popups for this site and try again.');
+      } else if (err?.code === 'auth/unauthorized-domain') {
+        setError('This domain is not authorised in Firebase. Add it under Authentication → Settings → Authorised domains.');
       } else {
-        setError('Sign-in failed. Try again.');
+        // Show the real Firebase error code so it's debuggable
+        setError(`Sign-in failed${err?.code ? ` (${err.code})` : ''}. Try again.`);
       }
     } finally {
       setIsLoading(false);

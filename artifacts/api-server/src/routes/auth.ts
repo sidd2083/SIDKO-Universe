@@ -48,7 +48,9 @@ router.post("/auth/google", authLimiter, async (req, res): Promise<void> => {
   // Verify the token signature and expiry with Firebase Admin
   let tokenEmail: string;
   try {
-    const decoded = await getAdminAuth().verifyIdToken(idToken, true);
+    // checkRevoked (2nd arg) requires a service account — omit it so token
+    // signature verification works with just the project ID.
+    const decoded = await getAdminAuth().verifyIdToken(idToken);
     if (!decoded.email) {
       res.status(401).json({ error: "Google account has no email." });
       return;
