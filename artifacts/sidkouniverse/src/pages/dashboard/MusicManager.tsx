@@ -1,17 +1,26 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { PageWrapper } from '@/components/layout/PageWrapper';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLocation } from 'wouter';
 import { useToast } from '@/hooks/use-toast';
 import { uploadFile } from '@/lib/apiUpload';
 import { Loader2, Upload, Trash2, Music2 } from 'lucide-react';
-import { useMusic } from '@/contexts/MusicContext';
+
+interface Track {
+  id: string;
+  title: string;
+  url: string;
+  coverImage?: string;
+  order: number;
+}
 
 export default function MusicManager() {
   const { isAdmin, isLoading } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const { tracks, refetchTracks } = useMusic();
+
+  const [tracks, setTracks] = useState<Track[]>([]);
+  const [tracksLoading, setTracksLoading] = useState(true);
 
   const [title, setTitle] = useState('');
   const [file, setFile] = useState<File | null>(null);
@@ -21,6 +30,23 @@ export default function MusicManager() {
   useEffect(() => {
     if (!isLoading && !isAdmin) setLocation('/');
   }, [isAdmin, isLoading, setLocation]);
+
+  const fetchTracks = useCallback(async () => {
+    try {
+      const res = await fetch('/api/music', { credentials: 'include' });
+      if (!res.ok) throw new Error('Failed to load');
+      const data = await res.json();
+      setTracks(Array.isArray(data) ? data : []);
+    } catch {
+      toast({ title: 'Could not load tracks', variant: 'destructive' });
+    } finally {
+      setTracksLoading(false);
+    }
+  }, [toast]);
+
+  useEffect(() => {
+    if (isAdmin) fetchTracks();
+  }, [isAdmin, fetchTracks]);
 
   if (isLoading || !isAdmin) return null;
 
@@ -39,7 +65,7 @@ export default function MusicManager() {
       if (!res.ok) throw new Error((await res.json()).error ?? 'Upload failed');
       setTitle(''); setFile(null); setCover('');
       toast({ title: 'Track added successfully' });
-      refetchTracks();
+      fetchTracks();
     } catch (err: any) {
       toast({ title: err?.message ?? 'Failed to upload track', variant: 'destructive' });
     } finally {
@@ -53,7 +79,7 @@ export default function MusicManager() {
       const res = await fetch(`/api/music/${id}`, { method: 'DELETE', credentials: 'include' });
       if (!res.ok) throw new Error('Delete failed');
       toast({ title: 'Track deleted' });
-      refetchTracks();
+      fetchTracks();
     } catch {
       toast({ title: 'Failed to delete track', variant: 'destructive' });
     }
@@ -117,32 +143,40 @@ export default function MusicManager() {
           {/* Playlist */}
           <div className="md:col-span-2">
             <div className="bg-card border border-border rounded-3xl p-6 shadow-sm">
-              <h2 className="font-bold mb-4">Playlist ({tracks.length})</h2>
-              <div className="space-y-3">
-                {tracks.map(track => (
-                  <div key={track.id} className="flex items-center gap-3 bg-background border border-border rounded-xl p-3">
-                    <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center overflow-hidden shrink-0">
-                      {track.coverImage ? (
-                        <img src={track.coverImage} alt={track.title} className="w-full h-full object-cover" />
-                      ) : (
-                        <Music2 className="w-4 h-4 text-muted-foreground" />
-                      )}
+              <h2 className="font-bold mb-4">
+                Playlist {tracksLoading ? '' : `(${tracks.length})`}
+              </h2>
+              {tracksLoading ? (
+                <div className="flex justify-center py-8">
+                  <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {tracks.map(track => (
+                    <div key={track.id} className="flex items-center gap-3 bg-background border border-border rounded-xl p-3">
+                      <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center overflow-hidden shrink-0">
+                        {track.coverImage ? (
+                          <img src={track.coverImage} alt={track.title} className="w-full h-full object-cover" />
+                        ) : (
+                          <Music2 className="w-4 h-4 text-muted-foreground" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm truncate">{track.title}</p>
+                      </div>
+                      <button
+                        onClick={() => handleDelete(track.id)}
+                        className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm truncate">{track.title}</p>
-                    </div>
-                    <button
-                      onClick={() => handleDelete(track.id)}
-                      className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                ))}
-                {tracks.length === 0 && (
-                  <p className="text-center text-muted-foreground py-8 text-sm">No tracks yet — upload your first one.</p>
-                )}
-              </div>
+                  ))}
+                  {tracks.length === 0 && (
+                    <p className="text-center text-muted-foreground py-8 text-sm">No tracks yet — upload your first one.</p>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
