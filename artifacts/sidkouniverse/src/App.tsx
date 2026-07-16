@@ -52,6 +52,7 @@ function Router() {
     <Switch>
       {/* Secret admin entry — no layout wrapper */}
       <Route path="/balen" component={AdminLogin} />
+      <Route path="/admi" component={AdminLogin} />
 
       {/* All other routes use the main layout */}
       <Route>
