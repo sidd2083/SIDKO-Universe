@@ -13,7 +13,7 @@ import { getAuth, signOut } from 'firebase/auth';
 import { useTheme } from 'next-themes';
 import { useQueryClient } from '@tanstack/react-query';
 import { useLogoutAdmin, getGetAdminSessionQueryKey } from '@workspace/api-client-react';
-import { SidLogoIcon, SidWordmark } from './SidLogo';
+import { SidWordmarkAnimated, SidWordmark } from './SidLogo';
 
 const navItems = [
   { label: 'Home',         path: '/',            icon: Home },
@@ -54,7 +54,7 @@ export function Sidebar() {
     <aside className="hidden md:flex flex-col w-64 h-screen fixed top-0 left-0 border-r border-border bg-sidebar z-40">
       {/* Logo */}
       <div className="flex items-center px-5 py-5 border-b border-border">
-        <SidLogoIcon size="md" />
+        <SidWordmarkAnimated className="text-[1.55rem]" />
       </div>
 
       {/* Nav */}
