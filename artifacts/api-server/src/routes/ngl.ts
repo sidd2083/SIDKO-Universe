@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import fs from 'fs';
 import path from 'path';
+import rateLimit from 'express-rate-limit';
 import { isValidSessionToken, ADMIN_COOKIE_NAME } from '../lib/adminSession.js';
 
 const FILE = process.env.VERCEL === '1' ? '/tmp/sidko-ngl.json' : path.resolve(process.cwd(), 'ngl.json');
@@ -9,6 +10,15 @@ export interface NglMessage { id: string; question: string; approved: boolean; p
 
 function read(): NglMessage[] { try { if (fs.existsSync(FILE)) return JSON.parse(fs.readFileSync(FILE, 'utf-8')); } catch {} return []; }
 function write(d: NglMessage[]) { fs.writeFileSync(FILE, JSON.stringify(d, null, 2)); }
+
+// Prevent spam: 3 anonymous questions per 10 minutes per IP
+const nglSubmitLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 3,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many questions submitted. Try again later.' },
+});
 
 const router = Router();
 
@@ -25,10 +35,11 @@ router.get('/ngl/all', (req, res): void => {
   res.json(read().sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
 });
 
-// Public: submit a question
-router.post('/ngl', (req, res): void => {
+// Public: submit a question (rate-limited)
+router.post('/ngl', nglSubmitLimiter, (req, res): void => {
   const { question } = req.body as { question?: string };
   if (!question?.trim()) { res.status(400).json({ error: 'question required' }); return; }
+  if (question.trim().length > 500) { res.status(400).json({ error: 'question too long (max 500 chars)' }); return; }
   const msgs = read();
   const msg: NglMessage = { id: `ngl_${Date.now()}`, question: question.trim(), approved: false, pinned: false, reply: '', createdAt: new Date().toISOString() };
   msgs.unshift(msg);

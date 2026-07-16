@@ -5,8 +5,8 @@ Siddhant's personal site: a public blog/portfolio ("digital life" journal — me
 ## Run & Operate
 
 Workflows (already configured — just press Run):
-- **API Server** — `PORT=8080 pnpm --filter @workspace/api-server run dev` (port 8080)
-- **SidkoUniverse** — `PORT=23562 BASE_PATH=/ pnpm --filter @workspace/sidkouniverse run dev` (port 23562)
+- **artifacts/api-server: API Server** — primary workflow (port 8080)
+- **artifacts/sidkouniverse: web** — primary workflow (port 23562)
 
 Manual commands:
 - `pnpm run typecheck` — full typecheck across all packages
@@ -14,13 +14,16 @@ Manual commands:
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
 - `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
 
-Required secrets:
+Required env vars / secrets:
 - `SESSION_SECRET` — signs the admin session cookie (already set ✓)
-- `ADMIN_USERNAME`, `ADMIN_PASSWORD` — admin login credentials for `/balen`
+- `ADMIN_EMAIL` — Gmail address allowed to log in as admin (already set ✓)
+- `FIREBASE_PROJECT_ID` — Firebase project ID for server-side token verification (already set ✓)
+- `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_APP_ID` — Firebase client config (already set ✓)
 - `DATABASE_URL` — Postgres connection string (needed if/when DB features are used)
 
 Optional (Firebase — only needed for Firestore-backed content):
-- `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_STORAGE_BUCKET`, `VITE_FIREBASE_MESSAGING_SENDER_ID`, `VITE_FIREBASE_APP_ID`
+- `VITE_FIREBASE_STORAGE_BUCKET`, `VITE_FIREBASE_MESSAGING_SENDER_ID`
+- `FIREBASE_SERVICE_ACCOUNT_KEY` — full service account JSON (needed for Firestore admin writes)
 
 ## Vercel Deployment
 
