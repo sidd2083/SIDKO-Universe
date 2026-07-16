@@ -1,4 +1,4 @@
-import express, { type Express } from "express";
+import express, { type Application } from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import { pinoHttp } from "pino-http";
@@ -19,7 +19,7 @@ if (!fs.existsSync(UPLOADS_DIR)) {
   fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 }
 
-const app: Express = express();
+const app: Application = express();
 
 // Trust the Replit / reverse-proxy X-Forwarded-For header so that
 // express-rate-limit can identify real client IPs correctly.
