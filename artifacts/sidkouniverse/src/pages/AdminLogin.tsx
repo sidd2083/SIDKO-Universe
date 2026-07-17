@@ -5,23 +5,6 @@ import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { setAdminSession } from '@/contexts/AuthContext';
 
-// SHA-256 hashes of the valid credentials.
-// Plaintext never lives in the browser bundle — only the hashes.
-const VALID_USERNAME_HASH = '3477e5f0bebcbadab458297d38ee342a219d431f2e6848886658f44c8487bf28';
-const VALID_PASSWORD_HASH = 'd2e0f306ec7bf03dd9277e2110557f15cf5615dabfe800c85bc9c68ed77eaf62';
-
-async function sha256hex(str: string): Promise<string> {
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
-  return Array.from(new Uint8Array(buf))
-    .map(b => b.toString(16).padStart(2, '0'))
-    .join('');
-}
-
-async function checkCredentials(username: string, password: string): Promise<boolean> {
-  const [uHash, pHash] = await Promise.all([sha256hex(username), sha256hex(password)]);
-  return uHash === VALID_USERNAME_HASH && pHash === VALID_PASSWORD_HASH;
-}
-
 export default function AdminLogin() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -48,24 +31,24 @@ export default function AdminLogin() {
     setError('');
 
     try {
-      const ok = await checkCredentials(username.trim(), password.trim());
-      if (!ok) {
-        setError('Wrong username or password.');
-        return;
-      }
-
-      // Mark session in browser storage and notify AuthContext
-      setAdminSession();
-      window.dispatchEvent(new Event('sidko_admin_changed'));
-
-      // Also fire the API login in the background so the cookie session is set too
-      fetch('/api/auth/login', {
+      // Call the API — this sets the httpOnly session cookie used by all
+      // protected endpoints (POST /api/music, POST /api/memories, etc.)
+      const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({ username: username.trim(), password: password.trim() }),
-      }).catch(() => { /* non-critical */ });
+      });
 
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError((data as any).error ?? 'Wrong username or password.');
+        return;
+      }
+
+      // Mark session in browser storage so AuthContext shows admin UI
+      setAdminSession();
+      window.dispatchEvent(new Event('sidko_admin_changed'));
       setLocation('/dashboard');
     } catch {
       setError('Something went wrong. Try again.');

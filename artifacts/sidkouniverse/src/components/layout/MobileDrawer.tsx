@@ -7,7 +7,7 @@ import {
   X, GraduationCap, LayoutDashboard, LogOut
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth, clearAdminSession } from '@/contexts/AuthContext';
 import { useQueryClient } from '@tanstack/react-query';
 import { useLogoutAdmin, getGetAdminSessionQueryKey } from '@workspace/api-client-react';
 import { SidLogoIcon, SidWordmark } from './SidLogo';
@@ -38,6 +38,8 @@ export function MobileDrawer({ open, onClose }: MobileDrawerProps) {
   const handleAdminLogout = () => {
     logoutAdminMutation.mutate(undefined, {
       onSuccess: async () => {
+        clearAdminSession();
+        window.dispatchEvent(new Event('sidko_admin_changed'));
         await queryClient.invalidateQueries({ queryKey: getGetAdminSessionQueryKey() });
         onClose();
         setLocation('/');
