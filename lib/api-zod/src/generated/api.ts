@@ -22,7 +22,8 @@ export const LoginAdminBody = zod.object({
 })
 
 export const LoginAdminResponse = zod.object({
-  "isAdmin": zod.boolean()
+  "isAdmin": zod.boolean(),
+  "token": zod.string().optional()
 })
 
 
@@ -36,7 +37,8 @@ export const LogoutAdminResponse = zod.void()
  * @summary Get current admin session state
  */
 export const GetAdminSessionResponse = zod.object({
-  "isAdmin": zod.boolean()
+  "isAdmin": zod.boolean(),
+  "token": zod.string().optional()
 })
 
 

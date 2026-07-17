@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import fs from 'fs';
 import path from 'path';
-import { isValidSessionToken, ADMIN_COOKIE_NAME } from '../lib/adminSession.js';
+import { isValidSessionToken, extractAdminToken } from '../lib/adminSession.js';
 
 const FILE = process.env.VERCEL === '1' ? '/tmp/sidko-posts.json' : path.resolve(process.cwd(), 'posts.json');
 
@@ -11,6 +11,14 @@ function read(): Post[] { try { if (fs.existsSync(FILE)) return JSON.parse(fs.re
 function write(d: Post[]) { fs.writeFileSync(FILE, JSON.stringify(d, null, 2)); }
 function slugify(s: string) { return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''); }
 
+function requireAdmin(req: any, res: any): boolean {
+  if (!isValidSessionToken(extractAdminToken(req))) {
+    res.status(401).json({ error: 'Admin required' });
+    return false;
+  }
+  return true;
+}
+
 const router = Router();
 
 router.get('/posts', (_req, res): void => {
@@ -18,20 +26,18 @@ router.get('/posts', (_req, res): void => {
 });
 
 router.get('/posts/all', (req, res): void => {
-  const token = req.cookies?.[ADMIN_COOKIE_NAME] as string | undefined;
-  if (!isValidSessionToken(token)) { res.status(401).json({ error: 'Admin required' }); return; }
+  if (!requireAdmin(req, res)) return;
   res.json(read().sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
 });
 
-router.get('/posts/:id', (req, res): void => {
-  const p = read().find(p => p.id === req.params.id || p.slug === req.params.id);
-  if (!p) { res.status(404).json({ error: 'Not found' }); return; }
-  res.json(p);
+router.get('/posts/:slug', (req, res): void => {
+  const post = read().find(p => p.slug === req.params.slug || p.id === req.params.slug);
+  if (!post) { res.status(404).json({ error: 'Not found' }); return; }
+  res.json(post);
 });
 
 router.post('/posts', (req, res): void => {
-  const token = req.cookies?.[ADMIN_COOKIE_NAME] as string | undefined;
-  if (!isValidSessionToken(token)) { res.status(401).json({ error: 'Admin required' }); return; }
+  if (!requireAdmin(req, res)) return;
   const { title, content, excerpt, coverImage, readingTime, published } = req.body as Partial<Post>;
   if (!title?.trim() || !content?.trim()) { res.status(400).json({ error: 'title and content required' }); return; }
   const posts = read();
@@ -42,8 +48,7 @@ router.post('/posts', (req, res): void => {
 });
 
 router.patch('/posts/:id', (req, res): void => {
-  const token = req.cookies?.[ADMIN_COOKIE_NAME] as string | undefined;
-  if (!isValidSessionToken(token)) { res.status(401).json({ error: 'Admin required' }); return; }
+  if (!requireAdmin(req, res)) return;
   const posts = read();
   const idx = posts.findIndex(p => p.id === req.params.id);
   if (idx === -1) { res.status(404).json({ error: 'Not found' }); return; }
@@ -53,8 +58,7 @@ router.patch('/posts/:id', (req, res): void => {
 });
 
 router.delete('/posts/:id', (req, res): void => {
-  const token = req.cookies?.[ADMIN_COOKIE_NAME] as string | undefined;
-  if (!isValidSessionToken(token)) { res.status(401).json({ error: 'Admin required' }); return; }
+  if (!requireAdmin(req, res)) return;
   const posts = read();
   const idx = posts.findIndex(p => p.id === req.params.id);
   if (idx === -1) { res.status(404).json({ error: 'Not found' }); return; }

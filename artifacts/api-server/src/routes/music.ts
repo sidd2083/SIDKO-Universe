@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import fs from 'fs';
 import path from 'path';
-import { isValidSessionToken, ADMIN_COOKIE_NAME } from '../lib/adminSession.js';
+import { isValidSessionToken, extractAdminToken } from '../lib/adminSession.js';
 
 const MUSIC_FILE =
   process.env.VERCEL === '1'
@@ -21,9 +21,7 @@ function readTracks(): Track[] {
     if (fs.existsSync(MUSIC_FILE)) {
       return JSON.parse(fs.readFileSync(MUSIC_FILE, 'utf-8')) as Track[];
     }
-  } catch {
-    // fall through to empty
-  }
+  } catch {}
   return [];
 }
 
@@ -31,26 +29,27 @@ function writeTracks(tracks: Track[]): void {
   fs.writeFileSync(MUSIC_FILE, JSON.stringify(tracks, null, 2), 'utf-8');
 }
 
+function requireAdmin(req: any, res: any): boolean {
+  if (!isValidSessionToken(extractAdminToken(req))) {
+    res.status(401).json({ error: 'Admin session required' });
+    return false;
+  }
+  return true;
+}
+
 const router = Router();
 
 router.get('/music', (_req, res): void => {
-  const tracks = readTracks().sort((a, b) => a.order - b.order);
-  res.json(tracks);
+  res.json(readTracks().sort((a, b) => a.order - b.order));
 });
 
 router.post('/music', (req, res): void => {
-  const token = req.cookies?.[ADMIN_COOKIE_NAME] as string | undefined;
-  if (!isValidSessionToken(token)) {
-    res.status(401).json({ error: 'Admin session required' });
-    return;
-  }
-
+  if (!requireAdmin(req, res)) return;
   const { title, url, coverImage } = req.body as Partial<Track>;
   if (!title || !url) {
     res.status(400).json({ error: 'title and url are required' });
     return;
   }
-
   const tracks = readTracks();
   const newTrack: Track = {
     id: `track_${Date.now()}`,
@@ -65,12 +64,7 @@ router.post('/music', (req, res): void => {
 });
 
 router.delete('/music/:id', (req, res): void => {
-  const token = req.cookies?.[ADMIN_COOKIE_NAME] as string | undefined;
-  if (!isValidSessionToken(token)) {
-    res.status(401).json({ error: 'Admin session required' });
-    return;
-  }
-
+  if (!requireAdmin(req, res)) return;
   const { id } = req.params;
   const tracks = readTracks();
   const idx = tracks.findIndex(t => t.id === id);

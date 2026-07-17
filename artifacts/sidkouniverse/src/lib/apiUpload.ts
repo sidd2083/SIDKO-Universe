@@ -1,3 +1,5 @@
+import { withAdminHeaders } from './adminAuth';
+
 /**
  * Upload a file to the API server.
  * Returns the public URL of the uploaded file.
@@ -8,7 +10,8 @@ export async function uploadFile(file: File): Promise<string> {
 
   const res = await fetch('/api/upload', {
     method: 'POST',
-    credentials: 'include', // send admin session cookie
+    credentials: 'include',
+    headers: withAdminHeaders(), // send Bearer token if available
     body: form,
   });
 

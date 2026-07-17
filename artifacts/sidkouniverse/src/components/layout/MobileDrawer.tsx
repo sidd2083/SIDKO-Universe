@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth, clearAdminSession } from '@/contexts/AuthContext';
+import { clearAdminToken } from '@/lib/adminAuth';
 import { useQueryClient } from '@tanstack/react-query';
 import { useLogoutAdmin, getGetAdminSessionQueryKey } from '@workspace/api-client-react';
 import { SidLogoIcon, SidWordmark } from './SidLogo';
@@ -39,6 +40,7 @@ export function MobileDrawer({ open, onClose }: MobileDrawerProps) {
     logoutAdminMutation.mutate(undefined, {
       onSuccess: async () => {
         clearAdminSession();
+        clearAdminToken();
         window.dispatchEvent(new Event('sidko_admin_changed'));
         await queryClient.invalidateQueries({ queryKey: getGetAdminSessionQueryKey() });
         onClose();

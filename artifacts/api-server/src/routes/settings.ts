@@ -2,7 +2,7 @@ import { Router } from 'express';
 import fs from 'fs';
 import path from 'path';
 import { z } from 'zod';
-import { isValidSessionToken, ADMIN_COOKIE_NAME } from '../lib/adminSession.js';
+import { isValidSessionToken, extractAdminToken } from '../lib/adminSession.js';
 
 const SETTINGS_FILE =
   process.env.VERCEL === '1'
@@ -25,7 +25,6 @@ const DEFAULT_SETTINGS: SiteSettings = {
   statusEmoji: '💻',
 };
 
-// Strict schema — only these keys are written; nothing else from req.body bleeds through
 const SettingsUpdateSchema = z.object({
   heroText: z.string().min(1).max(300).optional(),
   currentStatus: z.string().min(1).max(100).optional(),
@@ -39,9 +38,7 @@ export function readSettings(): SiteSettings {
     if (fs.existsSync(SETTINGS_FILE)) {
       return { ...DEFAULT_SETTINGS, ...JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf-8')) };
     }
-  } catch {
-    // fall through to defaults
-  }
+  } catch {}
   return DEFAULT_SETTINGS;
 }
 
@@ -56,18 +53,15 @@ router.get('/settings', (_req, res): void => {
 });
 
 router.put('/settings', (req, res): void => {
-  const token = req.cookies?.[ADMIN_COOKIE_NAME] as string | undefined;
-  if (!isValidSessionToken(token)) {
+  if (!isValidSessionToken(extractAdminToken(req))) {
     res.status(401).json({ error: 'Admin session required' });
     return;
   }
-
   const parsed = SettingsUpdateSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: 'Invalid settings', details: parsed.error.flatten() });
     return;
   }
-
   const current = readSettings();
   const updated: SiteSettings = { ...current, ...parsed.data };
   writeSettings(updated);

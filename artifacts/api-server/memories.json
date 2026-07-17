@@ -1,0 +1,18 @@
+[
+  {
+    "id": "mem_1784294028111",
+    "title": "Test Memory",
+    "description": "",
+    "images": [
+      "/api/uploads/test.jpg"
+    ],
+    "category": "Life",
+    "mood": "Happy",
+    "date": "2026-07-17",
+    "location": "",
+    "tags": [],
+    "featured": false,
+    "pinned": false,
+    "createdAt": "2026-07-17T13:13:48.111Z"
+  }
+]

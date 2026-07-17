@@ -3,6 +3,7 @@ import { PageWrapper } from '@/components/layout/PageWrapper';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLocation } from 'wouter';
 import { useToast } from '@/hooks/use-toast';
+import { withAdminHeaders } from '@/lib/adminAuth';
 import { Loader2, Globe, FileText } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -20,7 +21,7 @@ export default function ThoughtEditor() {
   const [isSaving, setIsSaving] = useState(false);
 
   const load = () => {
-    fetch('/api/thoughts/all', { credentials: 'include' })
+    fetch('/api/thoughts/all', { headers: withAdminHeaders(), credentials: 'include' })
       .then(r => r.json())
       .then(data => { if (Array.isArray(data)) setThoughts(data); })
       .catch(() => {});
@@ -39,16 +40,9 @@ export default function ThoughtEditor() {
     try {
       const res = await fetch('/api/thoughts', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: withAdminHeaders({ 'Content-Type': 'application/json' }),
         credentials: 'include',
-        body: JSON.stringify({
-          title: title.trim(),
-          content: content.trim(),
-          mood,
-          tags: tags.split(',').map(t => t.trim()).filter(Boolean),
-          readingTime: Math.max(1, Math.ceil(content.length / 1000)),
-          published,
-        }),
+        body: JSON.stringify({ title: title.trim(), content: content.trim(), mood, tags: tags.split(',').map(t => t.trim()).filter(Boolean), readingTime: Math.max(1, Math.ceil(content.length / 1000)), published }),
       });
       if (!res.ok) throw new Error('Failed');
       setTitle(''); setContent(''); setTags('');
@@ -65,7 +59,7 @@ export default function ThoughtEditor() {
     try {
       await fetch(`/api/thoughts/${t.id}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: withAdminHeaders({ 'Content-Type': 'application/json' }),
         credentials: 'include',
         body: JSON.stringify({ published: !t.published }),
       });
@@ -77,7 +71,7 @@ export default function ThoughtEditor() {
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this thought?')) return;
     try {
-      await fetch(`/api/thoughts/${id}`, { method: 'DELETE', credentials: 'include' });
+      await fetch(`/api/thoughts/${id}`, { method: 'DELETE', headers: withAdminHeaders(), credentials: 'include' });
       toast({ title: 'Deleted' });
       load();
     } catch { toast({ title: 'Failed to delete', variant: 'destructive' }); }
@@ -88,7 +82,6 @@ export default function ThoughtEditor() {
       <div className="max-w-6xl mx-auto py-8">
         <h1 className="text-3xl font-bold mb-8">Thought Editor</h1>
         <div className="grid lg:grid-cols-2 gap-8">
-          {/* Editor */}
           <div className="bg-card border border-border rounded-2xl p-6 shadow-sm flex flex-col h-[70vh]">
             <input type="text" placeholder="Thought Title" value={title} onChange={e => setTitle(e.target.value)}
               className="w-full bg-transparent border-b border-border py-3 text-2xl font-bold focus:outline-none focus:border-primary/50 text-foreground mb-4" />
@@ -121,7 +114,6 @@ export default function ThoughtEditor() {
             </div>
           </div>
 
-          {/* List */}
           <div className="bg-card border border-border rounded-2xl p-6 shadow-sm h-[70vh] flex flex-col">
             <h2 className="font-bold text-xl mb-5">All Thoughts ({thoughts.length})</h2>
             <div className="space-y-3 overflow-y-auto flex-1 pr-1">

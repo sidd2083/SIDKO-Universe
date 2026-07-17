@@ -4,6 +4,7 @@ import { Loader2, ShieldCheck, Eye, EyeOff } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { setAdminSession } from '@/contexts/AuthContext';
+import { setAdminToken } from '@/lib/adminAuth';
 
 export default function AdminLogin() {
   const [username, setUsername] = useState('');
@@ -31,8 +32,6 @@ export default function AdminLogin() {
     setError('');
 
     try {
-      // Call the API — this sets the httpOnly session cookie used by all
-      // protected endpoints (POST /api/music, POST /api/memories, etc.)
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -44,6 +43,14 @@ export default function AdminLogin() {
         const data = await res.json().catch(() => ({}));
         setError((data as any).error ?? 'Wrong username or password.');
         return;
+      }
+
+      const data = await res.json();
+
+      // Store the signed token in sessionStorage — sent as Authorization: Bearer
+      // on every admin request, bypassing any cookie proxy issues.
+      if (data.token) {
+        setAdminToken(data.token);
       }
 
       // Mark session in browser storage so AuthContext shows admin UI

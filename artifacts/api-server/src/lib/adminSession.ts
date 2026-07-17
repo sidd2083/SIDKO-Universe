@@ -114,5 +114,19 @@ function timingSafeStringEqual(a: string, b: string): boolean {
   return equal && aBuf.length === bBuf.length;
 }
 
+/**
+ * Extracts the admin session token from either:
+ * 1. The `Authorization: Bearer <token>` header (preferred — works through any proxy)
+ * 2. The httpOnly session cookie (fallback)
+ */
+export function extractAdminToken(req: {
+  cookies?: Record<string, string | undefined>;
+  headers: { authorization?: string };
+}): string | undefined {
+  const auth = req.headers.authorization;
+  if (auth?.startsWith("Bearer ")) return auth.slice(7);
+  return req.cookies?.[COOKIE_NAME] as string | undefined;
+}
+
 export const ADMIN_COOKIE_NAME = COOKIE_NAME;
 export const ADMIN_COOKIE_MAX_AGE_MS = MAX_AGE_MS;

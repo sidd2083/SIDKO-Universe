@@ -3,6 +3,7 @@ import { PageWrapper } from '@/components/layout/PageWrapper';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLocation } from 'wouter';
 import { useToast } from '@/hooks/use-toast';
+import { withAdminHeaders } from '@/lib/adminAuth';
 import { Check, Pin, Trash2, MessageSquare } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -16,7 +17,7 @@ export default function AnonymousCenter() {
   const [replies, setReplies] = useState<Record<string, string>>({});
 
   const load = () => {
-    fetch('/api/ngl/all', { credentials: 'include' })
+    fetch('/api/ngl/all', { headers: withAdminHeaders(), credentials: 'include' })
       .then(r => r.json())
       .then(data => { if (Array.isArray(data)) setMessages(data); })
       .catch(() => {});
@@ -32,7 +33,7 @@ export default function AnonymousCenter() {
   const patch = async (id: string, body: object) => {
     const res = await fetch(`/api/ngl/${id}`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers: withAdminHeaders({ 'Content-Type': 'application/json' }),
       credentials: 'include',
       body: JSON.stringify(body),
     });
@@ -41,33 +42,21 @@ export default function AnonymousCenter() {
   };
 
   const handleApprove = async (id: string) => {
-    const reply = replies[id] || '';
-    try {
-      await patch(id, { approved: true, reply });
-      toast({ title: 'Approved & published' });
-    } catch {
-      toast({ title: 'Failed to approve', variant: 'destructive' });
-    }
+    try { await patch(id, { approved: true, reply: replies[id] || '' }); toast({ title: 'Approved & published' }); }
+    catch { toast({ title: 'Failed to approve', variant: 'destructive' }); }
   };
 
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this message?')) return;
     try {
-      await fetch(`/api/ngl/${id}`, { method: 'DELETE', credentials: 'include' });
-      toast({ title: 'Deleted' });
-      load();
-    } catch {
-      toast({ title: 'Failed to delete', variant: 'destructive' });
-    }
+      await fetch(`/api/ngl/${id}`, { method: 'DELETE', headers: withAdminHeaders(), credentials: 'include' });
+      toast({ title: 'Deleted' }); load();
+    } catch { toast({ title: 'Failed to delete', variant: 'destructive' }); }
   };
 
   const handlePin = async (id: string, pinned: boolean) => {
-    try {
-      await patch(id, { pinned: !pinned });
-      toast({ title: pinned ? 'Unpinned' : 'Pinned' });
-    } catch {
-      toast({ title: 'Failed', variant: 'destructive' });
-    }
+    try { await patch(id, { pinned: !pinned }); toast({ title: pinned ? 'Unpinned' : 'Pinned' }); }
+    catch { toast({ title: 'Failed', variant: 'destructive' }); }
   };
 
   const pending = messages.filter(m => !m.approved);
@@ -91,7 +80,6 @@ export default function AnonymousCenter() {
           </div>
         )}
 
-        {/* Pending */}
         {pending.length > 0 && (
           <div className="mb-10">
             <h2 className="text-lg font-semibold mb-4 text-primary">⏳ Pending Approval</h2>
@@ -107,12 +95,9 @@ export default function AnonymousCenter() {
                   </div>
                   <p className="text-xs text-muted-foreground mb-4">{format(new Date(msg.createdAt), 'MMM d, yyyy · h:mm a')}</p>
                   <label className="block text-sm font-medium text-muted-foreground mb-2">Your reply (optional)</label>
-                  <textarea
-                    value={replies[msg.id] || ''}
-                    onChange={e => setReplies(r => ({ ...r, [msg.id]: e.target.value }))}
+                  <textarea value={replies[msg.id] || ''} onChange={e => setReplies(r => ({ ...r, [msg.id]: e.target.value }))}
                     placeholder="Write your public reply..."
-                    className="w-full bg-background border border-border rounded-xl p-3 min-h-[90px] resize-none focus:outline-none focus:ring-2 focus:ring-primary/30 text-foreground text-sm mb-3"
-                  />
+                    className="w-full bg-background border border-border rounded-xl p-3 min-h-[90px] resize-none focus:outline-none focus:ring-2 focus:ring-primary/30 text-foreground text-sm mb-3" />
                   <button onClick={() => handleApprove(msg.id)}
                     className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-xl font-medium text-sm hover:opacity-90 transition-opacity">
                     <Check className="w-4 h-4" /> Approve & Publish
@@ -123,7 +108,6 @@ export default function AnonymousCenter() {
           </div>
         )}
 
-        {/* Approved */}
         {approved.length > 0 && (
           <div>
             <h2 className="text-lg font-semibold mb-4">✅ Published</h2>

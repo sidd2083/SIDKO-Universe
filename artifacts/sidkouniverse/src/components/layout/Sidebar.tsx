@@ -7,6 +7,7 @@ import {
   LogOut, Sun, Moon, LayoutDashboard, GraduationCap, Users,
 } from 'lucide-react';
 import { useAuth, clearAdminSession } from '@/contexts/AuthContext';
+import { clearAdminToken } from '@/lib/adminAuth';
 import { cn } from '@/lib/utils';
 import { isFirebaseConfigured } from '@/lib/firebase';
 import { getAuth, signOut } from 'firebase/auth';
@@ -45,6 +46,7 @@ export function Sidebar() {
     logoutAdminMutation.mutate(undefined, {
       onSuccess: async () => {
         clearAdminSession();
+        clearAdminToken();
         window.dispatchEvent(new Event('sidko_admin_changed'));
         await queryClient.invalidateQueries({ queryKey: getGetAdminSessionQueryKey() });
         setLocation('/');

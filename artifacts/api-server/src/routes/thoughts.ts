@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import fs from 'fs';
 import path from 'path';
-import { isValidSessionToken, ADMIN_COOKIE_NAME } from '../lib/adminSession.js';
+import { isValidSessionToken, extractAdminToken } from '../lib/adminSession.js';
 
 const FILE = process.env.VERCEL === '1' ? '/tmp/sidko-thoughts.json' : path.resolve(process.cwd(), 'thoughts.json');
 
@@ -10,6 +10,14 @@ export interface Thought { id: string; title: string; content: string; mood: str
 function read(): Thought[] { try { if (fs.existsSync(FILE)) return JSON.parse(fs.readFileSync(FILE, 'utf-8')); } catch {} return []; }
 function write(d: Thought[]) { fs.writeFileSync(FILE, JSON.stringify(d, null, 2)); }
 
+function requireAdmin(req: any, res: any): boolean {
+  if (!isValidSessionToken(extractAdminToken(req))) {
+    res.status(401).json({ error: 'Admin required' });
+    return false;
+  }
+  return true;
+}
+
 const router = Router();
 
 router.get('/thoughts', (_req, res): void => {
@@ -17,8 +25,7 @@ router.get('/thoughts', (_req, res): void => {
 });
 
 router.get('/thoughts/all', (req, res): void => {
-  const token = req.cookies?.[ADMIN_COOKIE_NAME] as string | undefined;
-  if (!isValidSessionToken(token)) { res.status(401).json({ error: 'Admin required' }); return; }
+  if (!requireAdmin(req, res)) return;
   res.json(read().sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
 });
 
@@ -29,8 +36,7 @@ router.get('/thoughts/:id', (req, res): void => {
 });
 
 router.post('/thoughts', (req, res): void => {
-  const token = req.cookies?.[ADMIN_COOKIE_NAME] as string | undefined;
-  if (!isValidSessionToken(token)) { res.status(401).json({ error: 'Admin required' }); return; }
+  if (!requireAdmin(req, res)) return;
   const { title, content, mood, tags, readingTime, published } = req.body as Partial<Thought>;
   if (!title?.trim() || !content?.trim()) { res.status(400).json({ error: 'title and content required' }); return; }
   const thoughts = read();
@@ -41,8 +47,7 @@ router.post('/thoughts', (req, res): void => {
 });
 
 router.patch('/thoughts/:id', (req, res): void => {
-  const token = req.cookies?.[ADMIN_COOKIE_NAME] as string | undefined;
-  if (!isValidSessionToken(token)) { res.status(401).json({ error: 'Admin required' }); return; }
+  if (!requireAdmin(req, res)) return;
   const thoughts = read();
   const idx = thoughts.findIndex(t => t.id === req.params.id);
   if (idx === -1) { res.status(404).json({ error: 'Not found' }); return; }
@@ -52,8 +57,7 @@ router.patch('/thoughts/:id', (req, res): void => {
 });
 
 router.delete('/thoughts/:id', (req, res): void => {
-  const token = req.cookies?.[ADMIN_COOKIE_NAME] as string | undefined;
-  if (!isValidSessionToken(token)) { res.status(401).json({ error: 'Admin required' }); return; }
+  if (!requireAdmin(req, res)) return;
   const thoughts = read();
   const idx = thoughts.findIndex(t => t.id === req.params.id);
   if (idx === -1) { res.status(404).json({ error: 'Not found' }); return; }

@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import fs from 'fs';
 import path from 'path';
-import { isValidSessionToken, ADMIN_COOKIE_NAME } from '../lib/adminSession.js';
+import { isValidSessionToken, extractAdminToken } from '../lib/adminSession.js';
 
 const FILE = process.env.VERCEL === '1' ? '/tmp/sidko-memories.json' : path.resolve(process.cwd(), 'memories.json');
 
@@ -9,6 +9,14 @@ export interface Memory { id: string; title: string; description: string; images
 
 function read(): Memory[] { try { if (fs.existsSync(FILE)) return JSON.parse(fs.readFileSync(FILE, 'utf-8')); } catch {} return []; }
 function write(d: Memory[]) { fs.writeFileSync(FILE, JSON.stringify(d, null, 2)); }
+
+function requireAdmin(req: any, res: any): boolean {
+  if (!isValidSessionToken(extractAdminToken(req))) {
+    res.status(401).json({ error: 'Admin required' });
+    return false;
+  }
+  return true;
+}
 
 const router = Router();
 
@@ -23,8 +31,7 @@ router.get('/memories/:id', (req, res): void => {
 });
 
 router.post('/memories', (req, res): void => {
-  const token = req.cookies?.[ADMIN_COOKIE_NAME] as string | undefined;
-  if (!isValidSessionToken(token)) { res.status(401).json({ error: 'Admin required' }); return; }
+  if (!requireAdmin(req, res)) return;
   const { title, description, images, category, mood, date, location, tags, featured, pinned } = req.body as Partial<Memory>;
   if (!title?.trim()) { res.status(400).json({ error: 'title required' }); return; }
   const memories = read();
@@ -35,8 +42,7 @@ router.post('/memories', (req, res): void => {
 });
 
 router.patch('/memories/:id', (req, res): void => {
-  const token = req.cookies?.[ADMIN_COOKIE_NAME] as string | undefined;
-  if (!isValidSessionToken(token)) { res.status(401).json({ error: 'Admin required' }); return; }
+  if (!requireAdmin(req, res)) return;
   const memories = read();
   const idx = memories.findIndex(m => m.id === req.params.id);
   if (idx === -1) { res.status(404).json({ error: 'Not found' }); return; }
@@ -46,8 +52,7 @@ router.patch('/memories/:id', (req, res): void => {
 });
 
 router.delete('/memories/:id', (req, res): void => {
-  const token = req.cookies?.[ADMIN_COOKIE_NAME] as string | undefined;
-  if (!isValidSessionToken(token)) { res.status(401).json({ error: 'Admin required' }); return; }
+  if (!requireAdmin(req, res)) return;
   const memories = read();
   const idx = memories.findIndex(m => m.id === req.params.id);
   if (idx === -1) { res.status(404).json({ error: 'Not found' }); return; }
