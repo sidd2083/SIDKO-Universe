@@ -1,64 +1,71 @@
 import { Router } from 'express';
-import fs from 'fs';
-import path from 'path';
+import { getAdminFirestore } from '../lib/firebaseAdmin.js';
 import { isValidSessionToken, extractAdminToken } from '../lib/adminSession.js';
-
-const FILE = process.env.VERCEL === '1' ? '/tmp/sidko-memories.json' : path.resolve(process.cwd(), 'memories.json');
 
 export interface Memory { id: string; title: string; description: string; images: string[]; category: string; mood: string; date: string; location: string; tags: string[]; featured: boolean; pinned: boolean; createdAt: string; }
 
-function read(): Memory[] { try { if (fs.existsSync(FILE)) return JSON.parse(fs.readFileSync(FILE, 'utf-8')); } catch {} return []; }
-function write(d: Memory[]) { fs.writeFileSync(FILE, JSON.stringify(d, null, 2)); }
+const COL = 'memories';
 
 function requireAdmin(req: any, res: any): boolean {
-  if (!isValidSessionToken(extractAdminToken(req))) {
-    res.status(401).json({ error: 'Admin required' });
-    return false;
-  }
+  if (!isValidSessionToken(extractAdminToken(req))) { res.status(401).json({ error: 'Admin required' }); return false; }
   return true;
+}
+
+async function getAll(): Promise<Memory[]> {
+  const snap = await getAdminFirestore().collection(COL).get();
+  return snap.docs.map(d => ({ id: d.id, ...d.data() } as Memory));
 }
 
 const router = Router();
 
-router.get('/memories', (_req, res): void => {
-  res.json(read().sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+router.get('/memories', async (_req, res): Promise<void> => {
+  try {
+    const all = await getAll();
+    res.json(all.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+  } catch (e) { res.status(500).json({ error: String(e) }); }
 });
 
-router.get('/memories/:id', (req, res): void => {
-  const m = read().find(m => m.id === req.params.id);
-  if (!m) { res.status(404).json({ error: 'Not found' }); return; }
-  res.json(m);
+router.get('/memories/:id', async (req, res): Promise<void> => {
+  try {
+    const doc = await getAdminFirestore().collection(COL).doc(req.params.id).get();
+    if (!doc.exists) { res.status(404).json({ error: 'Not found' }); return; }
+    res.json({ id: doc.id, ...doc.data() });
+  } catch (e) { res.status(500).json({ error: String(e) }); }
 });
 
-router.post('/memories', (req, res): void => {
+router.post('/memories', async (req, res): Promise<void> => {
   if (!requireAdmin(req, res)) return;
   const { title, description, images, category, mood, date, location, tags, featured, pinned } = req.body as Partial<Memory>;
   if (!title?.trim()) { res.status(400).json({ error: 'title required' }); return; }
-  const memories = read();
-  const m: Memory = { id: `mem_${Date.now()}`, title: title.trim(), description: description?.trim() || '', images: images || [], category: category || 'General', mood: mood || 'Happy', date: date || new Date().toISOString().split('T')[0], location: location?.trim() || '', tags: tags || [], featured: featured ?? false, pinned: pinned ?? false, createdAt: new Date().toISOString() };
-  memories.unshift(m);
-  write(memories);
-  res.status(201).json(m);
+  try {
+    const id = `mem_${Date.now()}`;
+    const m: Memory = { id, title: title.trim(), description: description?.trim() || '', images: images || [], category: category || 'General', mood: mood || 'Happy', date: date || new Date().toISOString().split('T')[0], location: location?.trim() || '', tags: tags || [], featured: featured ?? false, pinned: pinned ?? false, createdAt: new Date().toISOString() };
+    await getAdminFirestore().collection(COL).doc(id).set(m);
+    res.status(201).json(m);
+  } catch (e) { res.status(500).json({ error: String(e) }); }
 });
 
-router.patch('/memories/:id', (req, res): void => {
+router.patch('/memories/:id', async (req, res): Promise<void> => {
   if (!requireAdmin(req, res)) return;
-  const memories = read();
-  const idx = memories.findIndex(m => m.id === req.params.id);
-  if (idx === -1) { res.status(404).json({ error: 'Not found' }); return; }
-  memories[idx] = { ...memories[idx], ...req.body, id: memories[idx].id, createdAt: memories[idx].createdAt };
-  write(memories);
-  res.json(memories[idx]);
+  try {
+    const ref = getAdminFirestore().collection(COL).doc(req.params.id);
+    const doc = await ref.get();
+    if (!doc.exists) { res.status(404).json({ error: 'Not found' }); return; }
+    const { id: _id, createdAt: _ca, ...updates } = req.body;
+    await ref.update(updates);
+    res.json({ id: doc.id, ...doc.data(), ...updates });
+  } catch (e) { res.status(500).json({ error: String(e) }); }
 });
 
-router.delete('/memories/:id', (req, res): void => {
+router.delete('/memories/:id', async (req, res): Promise<void> => {
   if (!requireAdmin(req, res)) return;
-  const memories = read();
-  const idx = memories.findIndex(m => m.id === req.params.id);
-  if (idx === -1) { res.status(404).json({ error: 'Not found' }); return; }
-  memories.splice(idx, 1);
-  write(memories);
-  res.sendStatus(204);
+  try {
+    const ref = getAdminFirestore().collection(COL).doc(req.params.id);
+    const doc = await ref.get();
+    if (!doc.exists) { res.status(404).json({ error: 'Not found' }); return; }
+    await ref.delete();
+    res.sendStatus(204);
+  } catch (e) { res.status(500).json({ error: String(e) }); }
 });
 
 export default router;

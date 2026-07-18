@@ -1,70 +1,82 @@
 import { Router } from 'express';
-import fs from 'fs';
-import path from 'path';
+import { getAdminFirestore } from '../lib/firebaseAdmin.js';
 import { isValidSessionToken, extractAdminToken } from '../lib/adminSession.js';
-
-const FILE = process.env.VERCEL === '1' ? '/tmp/sidko-posts.json' : path.resolve(process.cwd(), 'posts.json');
 
 export interface Post { id: string; title: string; slug: string; content: string; excerpt: string; coverImage?: string; readingTime: number; published: boolean; createdAt: string; }
 
-function read(): Post[] { try { if (fs.existsSync(FILE)) return JSON.parse(fs.readFileSync(FILE, 'utf-8')); } catch {} return []; }
-function write(d: Post[]) { fs.writeFileSync(FILE, JSON.stringify(d, null, 2)); }
+const COL = 'posts';
+
 function slugify(s: string) { return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''); }
 
 function requireAdmin(req: any, res: any): boolean {
-  if (!isValidSessionToken(extractAdminToken(req))) {
-    res.status(401).json({ error: 'Admin required' });
-    return false;
-  }
+  if (!isValidSessionToken(extractAdminToken(req))) { res.status(401).json({ error: 'Admin required' }); return false; }
   return true;
+}
+
+async function getAll(): Promise<Post[]> {
+  const snap = await getAdminFirestore().collection(COL).get();
+  return snap.docs.map(d => ({ id: d.id, ...d.data() } as Post));
 }
 
 const router = Router();
 
-router.get('/posts', (_req, res): void => {
-  res.json(read().filter(p => p.published).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+router.get('/posts', async (_req, res): Promise<void> => {
+  try {
+    const all = await getAll();
+    res.json(all.filter(p => p.published).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+  } catch (e) { res.status(500).json({ error: String(e) }); }
 });
 
-router.get('/posts/all', (req, res): void => {
+router.get('/posts/all', async (req, res): Promise<void> => {
   if (!requireAdmin(req, res)) return;
-  res.json(read().sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+  try {
+    const all = await getAll();
+    res.json(all.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+  } catch (e) { res.status(500).json({ error: String(e) }); }
 });
 
-router.get('/posts/:slug', (req, res): void => {
-  const post = read().find(p => p.slug === req.params.slug || p.id === req.params.slug);
-  if (!post) { res.status(404).json({ error: 'Not found' }); return; }
-  res.json(post);
+router.get('/posts/:slug', async (req, res): Promise<void> => {
+  try {
+    const all = await getAll();
+    const post = all.find(p => p.slug === req.params.slug || p.id === req.params.slug);
+    if (!post) { res.status(404).json({ error: 'Not found' }); return; }
+    res.json(post);
+  } catch (e) { res.status(500).json({ error: String(e) }); }
 });
 
-router.post('/posts', (req, res): void => {
+router.post('/posts', async (req, res): Promise<void> => {
   if (!requireAdmin(req, res)) return;
   const { title, content, excerpt, coverImage, readingTime, published } = req.body as Partial<Post>;
   if (!title?.trim() || !content?.trim()) { res.status(400).json({ error: 'title and content required' }); return; }
-  const posts = read();
-  const p: Post = { id: `post_${Date.now()}`, title: title.trim(), slug: slugify(title), content: content.trim(), excerpt: excerpt?.trim() || content.slice(0, 200), coverImage: coverImage || '', readingTime: readingTime || Math.ceil(content.length / 1000), published: published ?? false, createdAt: new Date().toISOString() };
-  posts.unshift(p);
-  write(posts);
-  res.status(201).json(p);
+  try {
+    const id = `post_${Date.now()}`;
+    const p: Post = { id, title: title.trim(), slug: slugify(title), content: content.trim(), excerpt: excerpt?.trim() || content.slice(0, 200), coverImage: coverImage || '', readingTime: readingTime || Math.ceil(content.length / 1000), published: published ?? false, createdAt: new Date().toISOString() };
+    await getAdminFirestore().collection(COL).doc(id).set(p);
+    res.status(201).json(p);
+  } catch (e) { res.status(500).json({ error: String(e) }); }
 });
 
-router.patch('/posts/:id', (req, res): void => {
+router.patch('/posts/:id', async (req, res): Promise<void> => {
   if (!requireAdmin(req, res)) return;
-  const posts = read();
-  const idx = posts.findIndex(p => p.id === req.params.id);
-  if (idx === -1) { res.status(404).json({ error: 'Not found' }); return; }
-  posts[idx] = { ...posts[idx], ...req.body, id: posts[idx].id, createdAt: posts[idx].createdAt };
-  write(posts);
-  res.json(posts[idx]);
+  try {
+    const ref = getAdminFirestore().collection(COL).doc(req.params.id);
+    const doc = await ref.get();
+    if (!doc.exists) { res.status(404).json({ error: 'Not found' }); return; }
+    const { id: _id, createdAt: _ca, ...updates } = req.body;
+    await ref.update(updates);
+    res.json({ id: doc.id, ...doc.data(), ...updates });
+  } catch (e) { res.status(500).json({ error: String(e) }); }
 });
 
-router.delete('/posts/:id', (req, res): void => {
+router.delete('/posts/:id', async (req, res): Promise<void> => {
   if (!requireAdmin(req, res)) return;
-  const posts = read();
-  const idx = posts.findIndex(p => p.id === req.params.id);
-  if (idx === -1) { res.status(404).json({ error: 'Not found' }); return; }
-  posts.splice(idx, 1);
-  write(posts);
-  res.sendStatus(204);
+  try {
+    const ref = getAdminFirestore().collection(COL).doc(req.params.id);
+    const doc = await ref.get();
+    if (!doc.exists) { res.status(404).json({ error: 'Not found' }); return; }
+    await ref.delete();
+    res.sendStatus(204);
+  } catch (e) { res.status(500).json({ error: String(e) }); }
 });
 
 export default router;

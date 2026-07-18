@@ -1,13 +1,7 @@
 import { Router } from 'express';
-import fs from 'fs';
-import path from 'path';
 import { z } from 'zod';
+import { getAdminFirestore } from '../lib/firebaseAdmin.js';
 import { isValidSessionToken, extractAdminToken } from '../lib/adminSession.js';
-
-const SETTINGS_FILE =
-  process.env.VERCEL === '1'
-    ? '/tmp/sidko-settings.json'
-    : path.resolve(process.cwd(), 'settings.json');
 
 export interface SiteSettings {
   heroText: string;
@@ -33,39 +27,36 @@ const SettingsUpdateSchema = z.object({
   statusEmoji: z.string().min(1).max(10).optional(),
 });
 
-export function readSettings(): SiteSettings {
+const DOC = () => getAdminFirestore().collection('settings').doc('main');
+
+export async function readSettings(): Promise<SiteSettings> {
   try {
-    if (fs.existsSync(SETTINGS_FILE)) {
-      return { ...DEFAULT_SETTINGS, ...JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf-8')) };
-    }
+    const doc = await DOC().get();
+    if (doc.exists) return { ...DEFAULT_SETTINGS, ...doc.data() } as SiteSettings;
   } catch {}
   return DEFAULT_SETTINGS;
 }
 
-function writeSettings(data: SiteSettings): void {
-  fs.writeFileSync(SETTINGS_FILE, JSON.stringify(data, null, 2), 'utf-8');
-}
-
 const router = Router();
 
-router.get('/settings', (_req, res): void => {
-  res.json(readSettings());
+router.get('/settings', async (_req, res): Promise<void> => {
+  try {
+    res.json(await readSettings());
+  } catch (e) { res.status(500).json({ error: String(e) }); }
 });
 
-router.put('/settings', (req, res): void => {
+router.put('/settings', async (req, res): Promise<void> => {
   if (!isValidSessionToken(extractAdminToken(req))) {
-    res.status(401).json({ error: 'Admin session required' });
-    return;
+    res.status(401).json({ error: 'Admin session required' }); return;
   }
   const parsed = SettingsUpdateSchema.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: 'Invalid settings', details: parsed.error.flatten() });
-    return;
-  }
-  const current = readSettings();
-  const updated: SiteSettings = { ...current, ...parsed.data };
-  writeSettings(updated);
-  res.json(updated);
+  if (!parsed.success) { res.status(400).json({ error: 'Invalid settings', details: parsed.error.flatten() }); return; }
+  try {
+    const current = await readSettings();
+    const updated: SiteSettings = { ...current, ...parsed.data };
+    await DOC().set(updated);
+    res.json(updated);
+  } catch (e) { res.status(500).json({ error: String(e) }); }
 });
 
 export default router;
