@@ -4,22 +4,27 @@ import { getAuth } from 'firebase/auth';
 import { isFirebaseConfigured } from '@/lib/firebase';
 import { useGetAdminSession } from '@workspace/api-client-react';
 
+// Import adminAuth so the auth token getter is registered with customFetch
+// on module load — this must happen before any API call is made.
+import '@/lib/adminAuth';
+
 const SESSION_KEY = 'sidko_admin_v1';
 
 /** Mark the current browser session as admin (called after successful login). */
 export function setAdminSession() {
-  sessionStorage.setItem(SESSION_KEY, '1');
+  // Use localStorage so the session survives tab closes and page refreshes.
+  localStorage.setItem(SESSION_KEY, '1');
 }
 
 /** Clear the admin session (called on logout). */
 export function clearAdminSession() {
-  sessionStorage.removeItem(SESSION_KEY);
+  localStorage.removeItem(SESSION_KEY);
 }
 
-/** Returns true if the browser sessionStorage has a valid admin flag. */
+/** Returns true if localStorage has a valid admin flag. */
 function readAdminSession(): boolean {
   try {
-    return sessionStorage.getItem(SESSION_KEY) === '1';
+    return localStorage.getItem(SESSION_KEY) === '1';
   } catch {
     return false;
   }
@@ -61,11 +66,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return () => unsubscribe();
   }, []);
 
+  // useGetAdminSession now sends the Bearer token (via setAuthTokenGetter
+  // registered in adminAuth.ts), so this correctly reflects server-side state.
   const { data: session, isLoading: sessionLoading } = useGetAdminSession();
 
-  // Admin if EITHER the browser session flag is set OR the API cookie session says so
+  // Admin if EITHER localStorage has the flag OR the API Bearer check says so
   const isAdmin = sessionAdmin || Boolean(session?.isAdmin);
+
+  // Not loading once Firebase resolves AND (we already know we're admin via
+  // localStorage, OR the server session check has completed).
   const isLoading = userLoading || (!sessionAdmin && sessionLoading);
+
+  // If the server says we're admin but localStorage flag is missing, restore it.
+  useEffect(() => {
+    if (session?.isAdmin && !sessionAdmin) {
+      setAdminSession();
+      setSessionAdmin(true);
+    }
+  }, [session?.isAdmin, sessionAdmin]);
 
   return (
     <AuthContext.Provider value={{ user, isAdmin, isLoading }}>
