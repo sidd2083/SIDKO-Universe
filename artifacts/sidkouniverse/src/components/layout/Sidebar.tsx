@@ -157,7 +157,7 @@ export function Sidebar() {
             </button>
           </div>
         ) : !isAdmin ? (
-          <Link href="/login">
+          <Link href="/balen">
             <span className="flex items-center justify-center w-full bg-primary text-primary-foreground py-2.5 px-4 rounded-xl text-sm font-semibold hover:brightness-110 transition-all cursor-pointer shadow-sm shadow-primary/20">
               Sign In
             </span>
