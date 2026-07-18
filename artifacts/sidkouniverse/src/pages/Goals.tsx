@@ -1,14 +1,21 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { PageWrapper } from '@/components/layout/PageWrapper';
-import { useFirestore } from '@/hooks/useFirestore';
 import { GoalCard, Goal } from '@/components/cards/GoalCard';
 import { Skeleton } from '@/components/shared/Skeleton';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { Target } from 'lucide-react';
-import { orderBy } from 'firebase/firestore';
 
 export default function Goals() {
-  const { data: goals, loading } = useFirestore<Goal>('goals', [orderBy('order', 'asc')]);
+  const [goals, setGoals] = useState<Goal[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/goals')
+      .then(r => r.json())
+      .then(data => { if (Array.isArray(data)) setGoals(data); })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
 
   const activeGoals = goals.filter(g => g.progress < 100);
   const completedGoals = goals.filter(g => g.progress >= 100);
@@ -44,7 +51,7 @@ export default function Goals() {
             {completedGoals.length > 0 && (
               <section>
                 <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-success" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-green-500" />
                   Completed
                 </h2>
                 <div className="grid md:grid-cols-2 gap-6 opacity-80">
@@ -56,10 +63,10 @@ export default function Goals() {
             )}
           </div>
         ) : (
-          <EmptyState 
-            icon={Target} 
-            title="No goals set" 
-            description="Time to set some new targets." 
+          <EmptyState
+            icon={Target}
+            title="No goals set"
+            description="Time to set some new targets."
           />
         )}
       </div>

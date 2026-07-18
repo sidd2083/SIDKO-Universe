@@ -1,29 +1,53 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { PageWrapper } from '@/components/layout/PageWrapper';
 import { useAuth } from '@/contexts/AuthContext';
-import { useLocation } from 'wouter';
-import { useFirestore } from '@/hooks/useFirestore';
-import { Memory } from '@/components/cards/MemoryCard';
-import { Thought } from '@/components/cards/ThoughtCard';
-import { Link } from 'wouter';
+import { useLocation, Link } from 'wouter';
+import { withAdminHeaders } from '@/lib/adminAuth';
 import {
   Settings, Image as ImageIcon, BookOpen, MessageSquare,
   PenTool, Music, Clock, Target
 } from 'lucide-react';
-import { orderBy, limit, where } from 'firebase/firestore';
 import { format } from 'date-fns';
 
+interface Memory { id: string; title: string; images: string[]; date: string; category: string; }
+interface Thought { id: string; title: string; content: string; mood: string; }
+interface NglMessage { id: string; approved: boolean; }
+
 export default function Dashboard() {
-  const { user, isAdmin, isLoading } = useAuth();
+  const { isAdmin, isLoading } = useAuth();
   const [, setLocation] = useLocation();
 
-  const { data: memories } = useFirestore<Memory>('memories', [orderBy('createdAt', 'desc'), limit(4)]);
-  const { data: thoughts } = useFirestore<Thought>('thoughts', [orderBy('createdAt', 'desc'), limit(3)]);
-  const { data: pendingAnonymous } = useFirestore<any>('anonymous_messages', [where('approved', '==', false)]);
+  const [memories, setMemories] = useState<Memory[]>([]);
+  const [thoughts, setThoughts] = useState<Thought[]>([]);
+  const [pendingCount, setPendingCount] = useState(0);
 
   useEffect(() => {
     if (!isLoading && !isAdmin) setLocation('/');
   }, [isAdmin, isLoading, setLocation]);
+
+  useEffect(() => {
+    if (!isAdmin) return;
+
+    // Fetch recent memories
+    fetch('/api/memories')
+      .then(r => r.json())
+      .then(data => { if (Array.isArray(data)) setMemories(data.slice(0, 4)); })
+      .catch(() => {});
+
+    // Fetch recent thoughts (all, including drafts)
+    fetch('/api/thoughts/all', { headers: withAdminHeaders(), credentials: 'include' })
+      .then(r => r.json())
+      .then(data => { if (Array.isArray(data)) setThoughts(data.slice(0, 3)); })
+      .catch(() => {});
+
+    // Fetch pending NGL count
+    fetch('/api/ngl/all', { headers: withAdminHeaders(), credentials: 'include' })
+      .then(r => r.json())
+      .then((data: NglMessage[]) => {
+        if (Array.isArray(data)) setPendingCount(data.filter(m => !m.approved).length);
+      })
+      .catch(() => {});
+  }, [isAdmin]);
 
   if (isLoading || !isAdmin) return null;
 
@@ -36,7 +60,7 @@ export default function Dashboard() {
     { label: 'Sid Philosophy', icon: PenTool, path: '/dashboard/blog', color: 'text-emerald-500 bg-emerald-500/10' },
     { label: 'Timeline', icon: Clock, path: '/dashboard/timeline', color: 'text-cyan-500 bg-cyan-500/10' },
     { label: 'Goals', icon: Target, path: '/dashboard/goals', color: 'text-amber-500 bg-amber-500/10' },
-    { label: 'Anonymous', icon: MessageSquare, path: '/dashboard/anonymous', color: 'text-orange-500 bg-orange-500/10', badge: pendingAnonymous?.length },
+    { label: 'Anonymous', icon: MessageSquare, path: '/dashboard/anonymous', color: 'text-orange-500 bg-orange-500/10', badge: pendingCount || undefined },
     { label: 'Music', icon: Music, path: '/dashboard/music', color: 'text-pink-500 bg-pink-500/10' },
     { label: 'Settings', icon: Settings, path: '/dashboard/settings', color: 'text-slate-500 bg-slate-500/10' },
   ];
@@ -74,9 +98,9 @@ export default function Dashboard() {
               <Link href="/dashboard/memories" className="text-xs font-medium text-primary hover:underline">Manage</Link>
             </div>
             <div className="space-y-3">
-              {memories?.length === 0 ? (
+              {memories.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-4">No memories yet.</p>
-              ) : memories?.map(m => (
+              ) : memories.map(m => (
                 <div key={m.id} className="flex items-center gap-3 bg-background border border-border rounded-xl p-3">
                   <div className="w-10 h-10 rounded-lg bg-muted overflow-hidden shrink-0">
                     {m.images?.[0] && <img src={m.images[0]} alt={m.title} className="w-full h-full object-cover" />}
@@ -97,9 +121,9 @@ export default function Dashboard() {
               <Link href="/dashboard/thoughts" className="text-xs font-medium text-primary hover:underline">Manage</Link>
             </div>
             <div className="space-y-3">
-              {thoughts?.length === 0 ? (
+              {thoughts.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-4">No thoughts yet.</p>
-              ) : thoughts?.map(t => (
+              ) : thoughts.map(t => (
                 <div key={t.id} className="bg-background border border-border rounded-xl p-4">
                   <div className="flex justify-between items-start mb-1.5">
                     <h3 className="font-semibold text-sm truncate">{t.title}</h3>

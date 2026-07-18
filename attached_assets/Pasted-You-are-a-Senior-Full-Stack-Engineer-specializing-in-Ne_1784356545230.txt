@@ -1,0 +1,296 @@
+You are a Senior Full Stack Engineer specializing in Next.js, React, TypeScript, Firebase Authentication, Firestore, Firebase Storage, and production debugging.
+
+DO NOT add new features.
+
+DO NOT redesign the UI.
+
+Your ONLY goal is to perform a complete debugging audit and fix every broken feature while preserving the existing UI and project structure.
+
+========================================================
+
+CURRENT PROBLEMS
+
+The project builds successfully but many core features are broken.
+
+Problem 1:
+Admin login does not work.
+
+The admin login uses a username and password.
+
+Entering the correct credentials always returns "Username or Password is incorrect."
+
+Find the root cause.
+
+Debug the entire authentication flow.
+
+Verify:
+
+- Login form
+- Validation
+- Authentication logic
+- Firebase Authentication
+- Username lookup
+- Password verification
+- Session creation
+- Cookies
+- Middleware
+- Route protection
+- Environment variables
+- Admin role verification
+
+Fix everything required until the administrator can log in successfully.
+
+========================================================
+
+Problem 2:
+
+Even after logging in as admin, NONE of the dashboard features work.
+
+Uploading images fails.
+
+Uploading memories fails.
+
+Creating thoughts fails.
+
+Publishing blogs fails.
+
+Changing music fails.
+
+Saving settings fails.
+
+Changing status fails.
+
+Creating goals fails.
+
+Everything appears to save but nothing actually gets stored.
+
+Find the root cause.
+
+Verify
+
+Firestore connection
+
+Firebase Storage
+
+Storage upload
+
+Firestore write
+
+Firestore read
+
+Storage rules
+
+Firestore rules
+
+API routes
+
+Upload handlers
+
+Image URLs
+
+Permissions
+
+Admin permissions
+
+Document creation
+
+Collection names
+
+Bucket configuration
+
+Environment variables
+
+Fix every issue.
+
+========================================================
+
+Problem 3
+
+Anonymous messages do not work.
+
+Users cannot submit anonymous messages.
+
+Check
+
+Frontend form
+
+Validation
+
+API
+
+Firestore write
+
+Collection
+
+Security rules
+
+Submission logic
+
+Response handling
+
+Fix until anonymous messages are successfully stored.
+
+========================================================
+
+Problem 4
+
+Public interactions are broken.
+
+Check
+
+Likes
+
+Comments
+
+Suggestions
+
+Messages
+
+Bookmarks
+
+Uploads
+
+Realtime updates
+
+Fix every broken interaction.
+
+========================================================
+
+Problem 5
+
+Audit the entire Firebase integration.
+
+Verify
+
+Firebase initialization
+
+Authentication
+
+Firestore
+
+Storage
+
+Environment variables
+
+Configuration
+
+Rules
+
+Collection names
+
+Indexes
+
+SDK versions
+
+Imports
+
+Client SDK
+
+Server SDK
+
+Make sure everything follows Firebase best practices.
+
+========================================================
+
+Problem 6
+
+Audit every dashboard page.
+
+Every button should actually work.
+
+Every save button should save.
+
+Every upload button should upload.
+
+Every delete button should delete.
+
+Every edit button should edit.
+
+Every status should update.
+
+Every setting should persist.
+
+========================================================
+
+DO A COMPLETE DEBUGGING AUDIT
+
+Instead of fixing only the visible errors, inspect the entire project.
+
+Check for
+
+Broken imports
+
+Wrong Firebase config
+
+Incorrect environment variables
+
+Incorrect Firestore paths
+
+Storage bucket issues
+
+Missing indexes
+
+Missing providers
+
+State management bugs
+
+Authentication bugs
+
+React errors
+
+TypeScript errors
+
+API errors
+
+Console errors
+
+Unhandled exceptions
+
+Network request failures
+
+Permission denied errors
+
+Missing await
+
+Async issues
+
+Incorrect hooks
+
+Missing loading states
+
+Wrong collection names
+
+Broken routing
+
+Everything.
+
+========================================================
+
+DO NOT STOP AFTER FIXING ONE ERROR.
+
+Continue debugging until ALL major functionality works.
+
+At the end provide a report containing:
+
+1. Every bug found.
+2. Root cause of each bug.
+3. Files modified.
+4. What was changed.
+5. Remaining issues (if any).
+
+The final result should have:
+
+✓ Working admin login
+✓ Working authentication
+✓ Working Firestore writes
+✓ Working Firebase Storage uploads
+✓ Working anonymous messages
+✓ Working dashboard uploads
+✓ Working goals
+✓ Working music upload
+✓ Working memories
+✓ Working thoughts
+✓ Working settings
+✓ Working realtime updates
+
+Only stop when every critical feature has been tested and verified working.

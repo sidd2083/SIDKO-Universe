@@ -10,6 +10,9 @@ import guestbookRouter from "./guestbook.js";
 import thoughtsRouter from "./thoughts.js";
 import postsRouter from "./posts.js";
 import memoriesRouter from "./memories.js";
+import goalsRouter from "./goals.js";
+import timelineRouter from "./timeline.js";
+import journalRouter from "./journal.js";
 
 const router: IRouter = Router();
 
@@ -24,5 +27,8 @@ router.use(guestbookRouter);
 router.use(thoughtsRouter);
 router.use(postsRouter);
 router.use(memoriesRouter);
+router.use(goalsRouter);
+router.use(timelineRouter);
+router.use(journalRouter);
 
 export default router;

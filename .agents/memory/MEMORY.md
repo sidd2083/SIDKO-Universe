@@ -1,0 +1,1 @@
+- [SidkoUniverse storage architecture](sidkouniverse-storage.md) — everything is local JSON on the API server; Firestore is NOT used despite Firebase client being configured.

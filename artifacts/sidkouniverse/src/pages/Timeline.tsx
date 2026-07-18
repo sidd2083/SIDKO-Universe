@@ -1,8 +1,6 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { PageWrapper } from '@/components/layout/PageWrapper';
-import { useFirestore } from '@/hooks/useFirestore';
 import { Skeleton } from '@/components/shared/Skeleton';
-import { orderBy } from 'firebase/firestore';
 import { motion } from 'framer-motion';
 import { Calendar, MapPin, Star } from 'lucide-react';
 import { Link } from 'wouter';
@@ -38,9 +36,16 @@ const categoryDot: Record<string, string> = {
 
 export default function Timeline() {
   const { isAdmin } = useAuth();
-  const { data: events, loading } = useFirestore<TimelineEvent>('timeline', [
-    orderBy('date', 'desc'),
-  ]);
+  const [events, setEvents] = useState<TimelineEvent[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/timeline')
+      .then(r => r.json())
+      .then(data => { if (Array.isArray(data)) setEvents(data); })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
 
   const eventsByYear = events.reduce((acc: Record<string, TimelineEvent[]>, ev) => {
     const year = ev.year || new Date(ev.date).getFullYear().toString();

@@ -1,12 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { PageWrapper } from '@/components/layout/PageWrapper';
 import { useRoute, Link } from 'wouter';
-import { db } from '@/lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
 import { format } from 'date-fns';
 import { Skeleton } from '@/components/shared/Skeleton';
-import { ArrowLeft, BookOpen, Clock } from 'lucide-react';
-import { LikeButton } from '@/components/shared/LikeButton';
+import { ArrowLeft, Clock } from 'lucide-react';
 
 export default function ThoughtDetail() {
   const [, params] = useRoute('/thoughts/:id');
@@ -14,20 +11,15 @@ export default function ThoughtDetail() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchThought() {
-      if (!params?.id) return;
-      try {
-        const d = await getDoc(doc(db, 'thoughts', params.id));
-        if (d.exists()) {
-          setThought({ id: d.id, ...d.data() });
-        }
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchThought();
+    if (!params?.id) return;
+    fetch(`/api/thoughts/${params.id}`)
+      .then(r => {
+        if (!r.ok) throw new Error('Not found');
+        return r.json();
+      })
+      .then(data => setThought(data))
+      .catch(() => setThought(null))
+      .finally(() => setLoading(false));
   }, [params?.id]);
 
   if (loading) {
@@ -46,7 +38,21 @@ export default function ThoughtDetail() {
     );
   }
 
-  if (!thought) return null;
+  if (!thought) {
+    return (
+      <PageWrapper>
+        <div className="max-w-2xl mx-auto py-8">
+          <Link href="/thoughts" className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground mb-8 transition-colors">
+            <ArrowLeft className="w-4 h-4" /> Back to Thoughts
+          </Link>
+          <p className="text-muted-foreground">Thought not found.</p>
+        </div>
+      </PageWrapper>
+    );
+  }
+
+  // createdAt is an ISO string from the API
+  const createdDate = thought.createdAt ? new Date(thought.createdAt) : null;
 
   return (
     <PageWrapper>
@@ -65,13 +71,13 @@ export default function ThoughtDetail() {
               <Clock className="w-4 h-4" /> {thought.readingTime || 2} min read
             </span>
           </div>
-          
+
           <h1 className="text-3xl md:text-4xl font-bold mb-4 text-foreground leading-tight">
             {thought.title}
           </h1>
-          
+
           <p className="text-sm text-muted-foreground font-medium pb-8 border-b border-border/50">
-            {thought.createdAt ? format(thought.createdAt.toDate(), 'MMMM d, yyyy • h:mm a') : ''}
+            {createdDate ? format(createdDate, 'MMMM d, yyyy • h:mm a') : ''}
           </p>
         </div>
 
@@ -80,10 +86,6 @@ export default function ThoughtDetail() {
             if (line.trim() === '') return <br key={i} />;
             return <p key={i} className="mb-4 leading-relaxed">{line}</p>;
           })}
-        </div>
-
-        <div className="flex items-center gap-6 pt-8 border-t border-border/50">
-          <LikeButton liked={false} count={thought.likesCount || 0} onClick={() => {}} className="scale-110" />
         </div>
       </div>
     </PageWrapper>

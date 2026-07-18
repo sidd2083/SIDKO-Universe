@@ -1,12 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { PageWrapper } from '@/components/layout/PageWrapper';
 import { useRoute, Link } from 'wouter';
-import { db } from '@/lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
 import { format } from 'date-fns';
 import { Skeleton } from '@/components/shared/Skeleton';
-import { ArrowLeft, MessageCircle } from 'lucide-react';
-import { LikeButton } from '@/components/shared/LikeButton';
+import { ArrowLeft } from 'lucide-react';
 
 export default function MemoryDetail() {
   const [, params] = useRoute('/memories/:id');
@@ -14,20 +11,15 @@ export default function MemoryDetail() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchMemory() {
-      if (!params?.id) return;
-      try {
-        const d = await getDoc(doc(db, 'memories', params.id));
-        if (d.exists()) {
-          setMemory({ id: d.id, ...d.data() });
-        }
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchMemory();
+    if (!params?.id) return;
+    fetch(`/api/memories/${params.id}`)
+      .then(r => {
+        if (!r.ok) throw new Error('Not found');
+        return r.json();
+      })
+      .then(data => setMemory(data))
+      .catch(() => setMemory(null))
+      .finally(() => setLoading(false));
   }, [params?.id]);
 
   if (loading) {
@@ -43,7 +35,18 @@ export default function MemoryDetail() {
     );
   }
 
-  if (!memory) return null;
+  if (!memory) {
+    return (
+      <PageWrapper>
+        <div className="max-w-4xl mx-auto py-8">
+          <Link href="/memories" className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground mb-8 transition-colors">
+            <ArrowLeft className="w-4 h-4" /> Back to Memories
+          </Link>
+          <p className="text-muted-foreground">Memory not found.</p>
+        </div>
+      </PageWrapper>
+    );
+  }
 
   return (
     <PageWrapper>
@@ -58,30 +61,21 @@ export default function MemoryDetail() {
           </div>
         )}
 
-        <div className="flex justify-between items-start mb-6">
-          <div>
-            <span className="inline-block px-3 py-1 bg-muted rounded-lg text-xs font-bold uppercase tracking-wider mb-3">
-              {memory.category}
-            </span>
-            <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">{memory.title}</h1>
-            <p className="text-sm text-muted-foreground font-medium">
-              {memory.date ? format(new Date(memory.date), 'MMMM d, yyyy') : 'Unknown Date'}
-              {memory.location && ` • ${memory.location}`}
-            </p>
-          </div>
-          
-          <div className="flex items-center gap-4">
-            <LikeButton liked={false} count={memory.likesCount || 0} onClick={() => {}} className="scale-110" />
-            <div className="flex items-center gap-1.5 text-muted-foreground font-medium">
-              <MessageCircle className="w-5 h-5" /> {memory.commentsCount || 0}
-            </div>
-          </div>
+        <div className="mb-6">
+          <span className="inline-block px-3 py-1 bg-muted rounded-lg text-xs font-bold uppercase tracking-wider mb-3">
+            {memory.category}
+          </span>
+          <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">{memory.title}</h1>
+          <p className="text-sm text-muted-foreground font-medium">
+            {memory.date ? format(new Date(memory.date), 'MMMM d, yyyy') : 'Unknown Date'}
+            {memory.location && ` • ${memory.location}`}
+          </p>
         </div>
 
         <div className="prose prose-lg dark:prose-invert max-w-none text-muted-foreground mb-12 pb-12 border-b border-border">
           <p className="leading-relaxed">{memory.description}</p>
         </div>
-        
+
         {memory.tags && memory.tags.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-12">
             {memory.tags.map((tag: string) => (

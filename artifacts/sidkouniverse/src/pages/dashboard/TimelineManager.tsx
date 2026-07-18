@@ -1,14 +1,24 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { PageWrapper } from '@/components/layout/PageWrapper';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLocation } from 'wouter';
-import { useFirestore } from '@/hooks/useFirestore';
-import { orderBy } from 'firebase/firestore';
-import { addFirestoreDoc, updateFirestoreDoc, deleteFirestoreDoc, SERVER_TIMESTAMP } from '@/lib/firestoreApi';
+import { withAdminHeaders } from '@/lib/adminAuth';
 import { Plus, Trash2, Star, Pencil, X, Check, Loader2, Clock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { TimelineEvent } from '@/pages/Timeline';
 import { motion, AnimatePresence } from 'framer-motion';
+
+export interface TimelineEvent {
+  id: string;
+  title: string;
+  description: string;
+  date: string;
+  year: string;
+  category: 'milestone' | 'achievement' | 'memory' | 'project' | 'other';
+  location?: string;
+  highlight?: boolean;
+  emoji?: string;
+  createdAt: string;
+}
 
 const CATEGORIES = ['milestone', 'achievement', 'memory', 'project', 'other'] as const;
 
@@ -16,7 +26,6 @@ const emptyForm = {
   title: '',
   description: '',
   date: new Date().toISOString().split('T')[0],
-  year: new Date().getFullYear().toString(),
   category: 'milestone' as TimelineEvent['category'],
   location: '',
   emoji: '',
@@ -27,8 +36,9 @@ export default function TimelineManager() {
   const { isAdmin, isLoading } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const { data: events, loading } = useFirestore<TimelineEvent>('timeline', [orderBy('date', 'desc')]);
 
+  const [events, setEvents] = useState<TimelineEvent[]>([]);
+  const [eventsLoading, setEventsLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -37,6 +47,21 @@ export default function TimelineManager() {
   if (!isLoading && !isAdmin) { setLocation('/'); return null; }
   if (isLoading || !isAdmin) return null;
 
+  const fetchEvents = async () => {
+    try {
+      const res = await fetch('/api/timeline');
+      if (!res.ok) throw new Error();
+      setEvents(await res.json());
+    } catch {
+      toast({ title: 'Failed to load timeline', variant: 'destructive' });
+    } finally {
+      setEventsLoading(false);
+    }
+  };
+
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  useEffect(() => { if (isAdmin) fetchEvents(); }, [isAdmin]);
+
   const resetForm = () => { setForm({ ...emptyForm }); setEditingId(null); setShowForm(false); };
 
   const openEdit = (ev: TimelineEvent) => {
@@ -44,7 +69,6 @@ export default function TimelineManager() {
       title: ev.title,
       description: ev.description || '',
       date: ev.date,
-      year: ev.year || new Date(ev.date).getFullYear().toString(),
       category: ev.category,
       location: ev.location || '',
       emoji: ev.emoji || '',
@@ -59,19 +83,27 @@ export default function TimelineManager() {
     if (!form.title.trim()) return;
     setSaving(true);
     try {
-      const data = {
-        ...form,
-        year: new Date(form.date).getFullYear().toString(),
-        updatedAt: SERVER_TIMESTAMP,
-      };
       if (editingId) {
-        await updateFirestoreDoc('timeline', editingId, data);
+        const res = await fetch(`/api/timeline/${editingId}`, {
+          method: 'PATCH',
+          headers: withAdminHeaders({ 'Content-Type': 'application/json' }),
+          credentials: 'include',
+          body: JSON.stringify(form),
+        });
+        if (!res.ok) throw new Error();
         toast({ title: 'Event updated' });
       } else {
-        await addFirestoreDoc('timeline', { ...data, createdAt: SERVER_TIMESTAMP });
+        const res = await fetch('/api/timeline', {
+          method: 'POST',
+          headers: withAdminHeaders({ 'Content-Type': 'application/json' }),
+          credentials: 'include',
+          body: JSON.stringify(form),
+        });
+        if (!res.ok) throw new Error();
         toast({ title: 'Event added' });
       }
       resetForm();
+      fetchEvents();
     } catch {
       toast({ title: 'Error saving event', variant: 'destructive' });
     } finally {
@@ -82,8 +114,9 @@ export default function TimelineManager() {
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this event?')) return;
     try {
-      await deleteFirestoreDoc('timeline', id);
+      await fetch(`/api/timeline/${id}`, { method: 'DELETE', headers: withAdminHeaders(), credentials: 'include' });
       toast({ title: 'Event deleted' });
+      fetchEvents();
     } catch {
       toast({ title: 'Error deleting event', variant: 'destructive' });
     }
@@ -97,22 +130,16 @@ export default function TimelineManager() {
             <h1 className="text-2xl font-bold">Timeline Manager</h1>
             <p className="text-muted-foreground text-sm mt-1">{events.length} event{events.length !== 1 ? 's' : ''}</p>
           </div>
-          <button
-            onClick={() => { resetForm(); setShowForm(true); }}
-            className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-xl text-sm font-medium hover:brightness-110 transition-all"
-          >
+          <button onClick={() => { resetForm(); setShowForm(true); }}
+            className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-xl text-sm font-medium hover:brightness-110 transition-all">
             <Plus className="w-4 h-4" /> Add Event
           </button>
         </div>
 
         <AnimatePresence>
           {showForm && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              className="bg-card border border-border rounded-2xl p-6 mb-8 shadow-sm"
-            >
+            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
+              className="bg-card border border-border rounded-2xl p-6 mb-8 shadow-sm">
               <div className="flex items-center justify-between mb-5">
                 <h2 className="font-semibold">{editingId ? 'Edit Event' : 'New Event'}</h2>
                 <button onClick={resetForm} className="text-muted-foreground hover:text-foreground"><X className="w-4 h-4" /></button>
@@ -127,9 +154,9 @@ export default function TimelineManager() {
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-muted-foreground mb-1.5">Date *</label>
-                    <input type="date" value={form.date} onChange={e => setForm(f => ({ ...f, date: e.target.value, year: new Date(e.target.value).getFullYear().toString() }))}
-                      className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
-                      required />
+                    <input type="date" value={form.date}
+                      onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
+                      className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" required />
                   </div>
                 </div>
                 <div>
@@ -179,7 +206,7 @@ export default function TimelineManager() {
           )}
         </AnimatePresence>
 
-        {loading ? (
+        {eventsLoading ? (
           <div className="space-y-3">{Array(4).fill(0).map((_, i) => <div key={i} className="h-16 bg-card border border-border rounded-xl animate-pulse" />)}</div>
         ) : events.length === 0 ? (
           <div className="text-center py-16 text-muted-foreground border border-dashed border-border rounded-2xl">
