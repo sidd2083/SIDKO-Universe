@@ -1,68 +1,82 @@
-import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-import { storage, isFirebaseConfigured } from './firebase';
 import { withAdminHeaders } from './adminAuth';
 
 /**
- * Upload a file.
+ * Upload a file to the best available storage backend.
  *
- * Strategy:
- * 1. When Firebase Storage is available (production on Vercel + dev with
- *    VITE_FIREBASE_* set), upload directly from the browser to Firebase
- *    Storage. The resulting URL is a permanent, globally-cached CDN link.
- * 2. Otherwise fall back to the Express /api/upload route (local filesystem,
- *    useful for bare-minimum dev without any Firebase project).
+ * Priority:
+ * 1. Cloudinary  — when VITE_CLOUDINARY_CLOUD_NAME + VITE_CLOUDINARY_UPLOAD_PRESET are set.
+ *                  Free tier, no credit card, permanent CDN. Works on Vercel + Replit.
+ * 2. API server  — fallback to the Express /api/upload route (local filesystem).
+ *                  Persistent on Replit, ephemeral on Vercel serverless.
  *
- * @param file       The file to upload.
- * @param onProgress Optional callback with upload percentage 0-100.
- * @returns          A permanent public URL for the uploaded file.
+ * @param file       File to upload.
+ * @param onProgress Optional progress callback (0–100).
+ * @returns          Permanent public URL of the uploaded file.
  */
 export async function uploadFile(
   file: File,
   onProgress?: (pct: number) => void,
 ): Promise<string> {
-  if (isFirebaseConfigured && storage) {
-    return uploadToFirebaseStorage(file, onProgress);
+  const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME as string | undefined;
+  const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET as string | undefined;
+
+  if (cloudName && uploadPreset) {
+    return uploadToCloudinary(file, cloudName, uploadPreset, onProgress);
   }
+
   return uploadToApiServer(file);
 }
 
 // ---------------------------------------------------------------------------
-// Firebase Storage (permanent, CDN-backed)
+// Cloudinary unsigned upload (free, permanent CDN, no server code required)
 // ---------------------------------------------------------------------------
-function uploadToFirebaseStorage(
+async function uploadToCloudinary(
   file: File,
+  cloudName: string,
+  uploadPreset: string,
   onProgress?: (pct: number) => void,
 ): Promise<string> {
-  const ext = file.name.split('.').pop()?.toLowerCase() ?? '';
-  const filename = `uploads/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-  const storageRef = ref(storage, filename);
-
   return new Promise((resolve, reject) => {
-    const task = uploadBytesResumable(storageRef, file);
+    const form = new FormData();
+    form.append('file', file);
+    form.append('upload_preset', uploadPreset);
+    // auto = Cloudinary picks the right resource type (image / video / raw)
+    const url = `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`;
 
-    task.on(
-      'state_changed',
-      snapshot => {
-        const pct = Math.round(
-          (snapshot.bytesTransferred / snapshot.totalBytes) * 100,
-        );
-        onProgress?.(pct);
-      },
-      err => reject(err),
-      async () => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', url);
+
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable && onProgress) {
+        onProgress(Math.round((e.loaded / e.total) * 100));
+      }
+    };
+
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
         try {
-          const url = await getDownloadURL(task.snapshot.ref);
-          resolve(url);
-        } catch (err) {
-          reject(err);
+          const data = JSON.parse(xhr.responseText) as { secure_url: string };
+          resolve(data.secure_url);
+        } catch {
+          reject(new Error('Cloudinary returned an unexpected response.'));
         }
-      },
-    );
+      } else {
+        let msg = 'Upload failed.';
+        try {
+          const err = JSON.parse(xhr.responseText) as { error?: { message?: string } };
+          if (err?.error?.message) msg = err.error.message;
+        } catch {}
+        reject(new Error(msg));
+      }
+    };
+
+    xhr.onerror = () => reject(new Error('Network error during upload.'));
+    xhr.send(form);
   });
 }
 
 // ---------------------------------------------------------------------------
-// API server fallback (local filesystem, dev only)
+// Fallback: Express API server upload (local filesystem)
 // ---------------------------------------------------------------------------
 async function uploadToApiServer(file: File): Promise<string> {
   const form = new FormData();
