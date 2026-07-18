@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { FieldValue } from "firebase-admin/firestore";
-import { isValidSessionToken, ADMIN_COOKIE_NAME } from "../lib/adminSession.js";
-import { getAdminFirestore } from "../lib/firebaseAdmin.js";
+import { isValidSessionToken, extractAdminToken } from "../lib/adminSession.js";
+import { getAdminFirestore, isFirebaseAdminConfigured } from "../lib/firebaseAdmin.js";
 
 /**
  * Fixed collections the dashboard is allowed to write to, plus the
@@ -25,14 +25,20 @@ function isAllowedCollection(name: string): boolean {
 
 const router = Router();
 
-// All routes below require a valid admin session cookie — this is the
-// server-side gate that lets us keep Firestore's own security rules
-// locked to "deny all client writes" while still letting the admin
-// dashboard write data (through this server, using the Admin SDK).
+// All routes below require a valid admin session — check both the
+// Authorization: Bearer header (set by adminAuth.ts / withAdminHeaders)
+// and the httpOnly cookie (fallback). Use extractAdminToken so that
+// both paths work regardless of whether cookies are forwarded.
 router.use("/firestore", (req, res, next) => {
-  const token = req.cookies?.[ADMIN_COOKIE_NAME] as string | undefined;
+  const token = extractAdminToken(req);
   if (!isValidSessionToken(token)) {
     res.status(401).json({ error: "Admin session required" });
+    return;
+  }
+  if (!isFirebaseAdminConfigured) {
+    res.status(503).json({
+      error: "Firestore is not configured on this server. Set FIREBASE_SERVICE_ACCOUNT_KEY to enable Firestore writes.",
+    });
     return;
   }
   next();

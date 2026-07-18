@@ -50,7 +50,8 @@ const queryClient = new QueryClient();
 function Router() {
   return (
     <Switch>
-      {/* Secret admin entry — no layout wrapper */}
+      {/* Admin login — accessible at /admin (primary), /balen, /admi */}
+      <Route path="/admin" component={AdminLogin} />
       <Route path="/balen" component={AdminLogin} />
       <Route path="/admi" component={AdminLogin} />
 

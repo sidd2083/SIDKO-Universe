@@ -2,11 +2,13 @@
  * Admin write helpers that go through the API server instead of writing to
  * Firestore directly from the browser. Firestore's own security rules deny
  * all client writes — only the server (using the Firebase Admin SDK, gated
- * by the admin session cookie) can create/update/delete documents.
+ * by the admin session) can create/update/delete documents.
  *
  * Reads still go straight to Firestore from the client (see useFirestore),
  * since Firestore rules allow public reads.
  */
+
+import { withAdminHeaders } from './adminAuth';
 
 /** Sentinel that the server replaces with a real Firestore server timestamp. */
 export const SERVER_TIMESTAMP = '__serverTimestamp__';
@@ -14,8 +16,12 @@ export const SERVER_TIMESTAMP = '__serverTimestamp__';
 async function request(path: string, options: RequestInit) {
   const res = await fetch(path, {
     credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
+    headers: withAdminHeaders({ 'Content-Type': 'application/json' }),
     ...options,
+    // Merge headers so admin token + Content-Type are both sent
+    ...(options.headers
+      ? { headers: withAdminHeaders({ 'Content-Type': 'application/json', ...(options.headers as Record<string, string>) }) }
+      : {}),
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: 'Request failed' }));

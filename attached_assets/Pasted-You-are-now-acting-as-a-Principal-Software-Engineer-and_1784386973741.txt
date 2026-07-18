@@ -1,0 +1,423 @@
+You are now acting as a Principal Software Engineer and Firebase Architect.
+
+Your ONLY objective is to make this application fully functional.
+
+Do NOT add random features.
+Do NOT redesign the UI.
+Do NOT rewrite working code.
+
+Treat this as a production application that has severe infrastructure problems.
+
+========================================================
+PROJECT STATUS
+========================================================
+
+The UI exists.
+
+The project builds.
+
+But almost every backend feature is broken.
+
+Current issues include:
+
+- Admin login does not work.
+- Admin dashboard cannot upload anything.
+- Images do not upload.
+- Music does not upload.
+- Thoughts cannot be published.
+- Blogs cannot be published.
+- Goals cannot be created.
+- Settings cannot be saved.
+- User anonymous messages (NGL) do not submit.
+- Firestore writes appear broken.
+- The application feels disconnected from its backend.
+
+Do NOT assume these are independent bugs.
+
+Assume there is a root cause and find it.
+
+========================================================
+FIRST TASK
+FULL PROJECT AUDIT
+========================================================
+
+Before changing ANY code:
+
+Audit the entire project.
+
+Inspect:
+
+• Folder structure
+• Authentication flow
+• Firebase initialization
+• Firestore initialization
+• Cloudinary integration
+• Environment variables
+• Server actions
+• API routes
+• Middleware
+• Route protection
+• Storage configuration
+• Firestore collections
+• Firestore rules
+• Authentication logic
+• Dashboard architecture
+• Client/server boundaries
+• Upload logic
+• Form submissions
+• Session handling
+• Build configuration
+• TypeScript errors
+• Runtime errors
+• Console errors
+• Network requests
+
+Identify every broken dependency.
+
+========================================================
+STEP 1
+VERIFY ENVIRONMENT VARIABLES
+========================================================
+
+Inspect every environment variable.
+
+Verify that every required variable exists.
+
+Check spelling.
+
+Check prefixes.
+
+Check server/client usage.
+
+Check whether values are undefined.
+
+Check whether variables are actually being read.
+
+Do not continue until every environment variable is verified.
+
+========================================================
+STEP 2
+VERIFY FIREBASE
+========================================================
+
+Completely inspect Firebase.
+
+Verify:
+
+Authentication
+
+Firestore
+
+Project ID
+
+Auth Domain
+
+API Key
+
+Initialization
+
+Collections
+
+Document paths
+
+Firestore reads
+
+Firestore writes
+
+Firestore updates
+
+Realtime listeners
+
+Indexes
+
+Rules
+
+Confirm the application is connected to the correct Firebase project.
+
+========================================================
+STEP 3
+VERIFY CLOUDINARY
+========================================================
+
+Inspect Cloudinary.
+
+Verify:
+
+Cloud Name
+
+API Key
+
+API Secret (server only)
+
+Upload Preset
+
+Upload endpoint
+
+Upload response
+
+Returned URLs
+
+Image storage
+
+File validation
+
+Everything.
+
+Actually upload a test image.
+
+========================================================
+STEP 4
+REBUILD ADMIN AUTHENTICATION
+========================================================
+
+Ignore the existing broken admin authentication.
+
+Build a completely new administrator authentication system.
+
+Create a new page
+
+/admin
+
+This page becomes the ONLY administrator login page.
+
+Do NOT reuse the old broken login code.
+
+Implement a clean authentication flow.
+
+The administrator should authenticate securely (for example, using Firebase Authentication and an Admin UID or equivalent secure authorization mechanism).
+
+Once authenticated:
+
+Create a valid session.
+
+Redirect to
+
+/dashboard
+
+Protect every dashboard route.
+
+Prevent every non-admin user from entering.
+
+Logout must work.
+
+Session persistence must work.
+
+========================================================
+STEP 5
+VERIFY DASHBOARD
+========================================================
+
+Every dashboard feature must work.
+
+Actually test:
+
+Upload Memory
+
+Upload Images
+
+Upload Videos
+
+Upload Music
+
+Write Thoughts
+
+Publish Blogs
+
+Create Goals
+
+Update About
+
+Update Homepage
+
+Settings
+
+Achievements
+
+Status
+
+Everything.
+
+Every Save button must save.
+
+Every Edit button must edit.
+
+Every Delete button must delete.
+
+========================================================
+STEP 6
+VERIFY USER FEATURES
+========================================================
+
+Verify:
+
+Registration
+
+Login
+
+Likes
+
+Bookmarks
+
+Comments
+
+Messages
+
+Suggestions
+
+Anonymous Messages
+
+Realtime Updates
+
+Everything.
+
+========================================================
+STEP 7
+VERIFY NGL
+========================================================
+
+Users currently cannot submit anonymous messages.
+
+Inspect:
+
+Frontend
+
+Validation
+
+API
+
+Firestore write
+
+Collection
+
+Rules
+
+Response
+
+Admin inbox
+
+Replies
+
+Public display
+
+Fix until users can successfully submit messages.
+
+========================================================
+STEP 8
+TRACE EVERY FAILURE
+========================================================
+
+Do not guess.
+
+For every failed feature:
+
+Trace it completely.
+
+Button
+
+↓
+
+Handler
+
+↓
+
+API
+
+↓
+
+Firebase
+
+↓
+
+Firestore
+
+↓
+
+Response
+
+↓
+
+UI
+
+Find the exact point of failure.
+
+========================================================
+STEP 9
+REMOVE DEAD CODE
+========================================================
+
+Remove old broken authentication code.
+
+Remove duplicate Firebase initialization.
+
+Remove duplicate services.
+
+Remove unused APIs.
+
+Remove dead code that conflicts with the new implementation.
+
+========================================================
+STEP 10
+FINAL VERIFICATION
+========================================================
+
+Actually test every feature before declaring success.
+
+Admin Login
+
+Dashboard
+
+Image Upload
+
+Music Upload
+
+Thought Publish
+
+Blog Publish
+
+Goal Creation
+
+Settings
+
+Anonymous Messages
+
+Comments
+
+Likes
+
+Realtime Updates
+
+Firestore Writes
+
+Cloudinary Uploads
+
+Everything.
+
+========================================================
+FINAL REPORT
+========================================================
+
+Only after everything works:
+
+Provide a report containing:
+
+1. Root cause of every bug.
+
+2. Files changed.
+
+3. Environment variables verified.
+
+4. Firebase issues fixed.
+
+5. Cloudinary issues fixed.
+
+6. Authentication rebuilt.
+
+7. Firestore collections verified.
+
+8. Features tested.
+
+Do NOT stop after fixing one issue.
+
+Continue debugging until the application is fully functional.
+
+If rebuilding the administrator authentication system is cleaner than patching the existing one, rebuild it while preserving the rest of the application.
