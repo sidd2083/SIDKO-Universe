@@ -2,7 +2,7 @@ import { Router } from 'express';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
-import { isValidSessionToken } from '../lib/adminSession.js';
+import { isValidSessionToken, extractAdminToken } from '../lib/adminSession.js';
 import { ADMIN_COOKIE_NAME } from '../lib/adminSession.js';
 
 // On Vercel, use /tmp (ephemeral). Locally, use ./uploads (persistent).
@@ -51,8 +51,15 @@ router.get('/uploads/:filename', (req, res): void => {
   res.sendFile(filePath);
 });
 
-/** Upload a file */
-router.post('/upload', upload.single('file'), (req, res): void => {
+/** Upload a file — requires valid admin session */
+router.post('/upload', (req, res, next) => {
+  const token = extractAdminToken(req as Parameters<typeof extractAdminToken>[0]);
+  if (!isValidSessionToken(token)) {
+    res.status(401).json({ error: 'Unauthorized' });
+    return;
+  }
+  next();
+}, upload.single('file'), (req, res): void => {
   if (!req.file) {
     res.status(400).json({ error: 'No file received' });
     return;

@@ -48,3 +48,7 @@ Thumbs.db
 # Replit
 .cache/
 .local/
+
+# Runtime upload artifacts (generated at runtime, not part of source)
+artifacts/api-server/uploads/*
+!artifacts/api-server/uploads/.gitkeep
