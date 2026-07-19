@@ -1,10 +1,13 @@
 import { Router } from 'express';
 import { getAdminFirestore } from '../lib/firebaseAdmin.js';
 import { isValidSessionToken, extractAdminToken } from '../lib/adminSession.js';
+import { cached, invalidate } from '../lib/cache.js';
 
 export interface Post { id: string; title: string; slug: string; content: string; excerpt: string; coverImage?: string; readingTime: number; published: boolean; createdAt: string; }
 
 const COL = 'posts';
+const CACHE_KEY = 'posts';
+const TTL = 60_000;
 
 function slugify(s: string) { return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''); }
 
@@ -14,8 +17,10 @@ function requireAdmin(req: any, res: any): boolean {
 }
 
 async function getAll(): Promise<Post[]> {
-  const snap = await getAdminFirestore().collection(COL).get();
-  return snap.docs.map(d => ({ id: d.id, ...d.data() } as Post));
+  return cached(CACHE_KEY, TTL, async () => {
+    const snap = await getAdminFirestore().collection(COL).get();
+    return snap.docs.map(d => ({ id: d.id, ...d.data() } as Post));
+  });
 }
 
 const router = Router();
@@ -52,6 +57,7 @@ router.post('/posts', async (req, res): Promise<void> => {
     const id = `post_${Date.now()}`;
     const p: Post = { id, title: title.trim(), slug: slugify(title), content: content.trim(), excerpt: excerpt?.trim() || content.slice(0, 200), coverImage: coverImage || '', readingTime: readingTime || Math.ceil(content.length / 1000), published: published ?? false, createdAt: new Date().toISOString() };
     await getAdminFirestore().collection(COL).doc(id).set(p);
+    invalidate(CACHE_KEY);
     res.status(201).json(p);
   } catch (e) { res.status(500).json({ error: String(e) }); }
 });
@@ -64,6 +70,7 @@ router.patch('/posts/:id', async (req, res): Promise<void> => {
     if (!doc.exists) { res.status(404).json({ error: 'Not found' }); return; }
     const { id: _id, createdAt: _ca, ...updates } = req.body;
     await ref.update(updates);
+    invalidate(CACHE_KEY);
     res.json({ id: doc.id, ...doc.data(), ...updates });
   } catch (e) { res.status(500).json({ error: String(e) }); }
 });
@@ -75,6 +82,7 @@ router.delete('/posts/:id', async (req, res): Promise<void> => {
     const doc = await ref.get();
     if (!doc.exists) { res.status(404).json({ error: 'Not found' }); return; }
     await ref.delete();
+    invalidate(CACHE_KEY);
     res.sendStatus(204);
   } catch (e) { res.status(500).json({ error: String(e) }); }
 });

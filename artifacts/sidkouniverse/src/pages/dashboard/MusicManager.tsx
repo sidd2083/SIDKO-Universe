@@ -81,7 +81,7 @@ export default function MusicManager() {
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this track?')) return;
     try {
-      const res = await fetch(`/api/music/${id}`, { method: 'DELETE', headers: withAdminHeaders(), credentials: 'include' });
+      const res = await fetch(apiUrl(`/api/music/${id}`), { method: 'DELETE', headers: withAdminHeaders(), credentials: 'include' });
       if (!res.ok) throw new Error('Delete failed');
       toast({ title: 'Track deleted' });
       fetchTracks();

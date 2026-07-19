@@ -1,10 +1,13 @@
 import { Router } from 'express';
 import { getAdminFirestore } from '../lib/firebaseAdmin.js';
 import { isValidSessionToken, extractAdminToken } from '../lib/adminSession.js';
+import { cached, invalidate } from '../lib/cache.js';
 
 export interface NglMessage { id: string; question: string; approved: boolean; pinned: boolean; reply?: string; createdAt: string; }
 
 const COL = 'ngl';
+const CACHE_KEY = 'ngl';
+const TTL = 30_000; // 30s — shorter since messages arrive frequently
 
 function requireAdmin(req: any, res: any): boolean {
   if (!isValidSessionToken(extractAdminToken(req))) { res.status(401).json({ error: 'Admin required' }); return false; }
@@ -12,8 +15,10 @@ function requireAdmin(req: any, res: any): boolean {
 }
 
 async function getAll(): Promise<NglMessage[]> {
-  const snap = await getAdminFirestore().collection(COL).get();
-  return snap.docs.map(d => ({ id: d.id, ...d.data() } as NglMessage));
+  return cached(CACHE_KEY, TTL, async () => {
+    const snap = await getAdminFirestore().collection(COL).get();
+    return snap.docs.map(d => ({ id: d.id, ...d.data() } as NglMessage));
+  });
 }
 
 const router = Router();
@@ -47,6 +52,7 @@ router.post('/ngl', async (req, res): Promise<void> => {
     const id = `ngl_${Date.now()}`;
     const m: NglMessage = { id, question: question.trim(), approved: false, pinned: false, createdAt: new Date().toISOString() };
     await getAdminFirestore().collection(COL).doc(id).set(m);
+    invalidate(CACHE_KEY);
     res.status(201).json(m);
   } catch (e) { res.status(500).json({ error: String(e) }); }
 });
@@ -60,6 +66,7 @@ router.patch('/ngl/:id', async (req, res): Promise<void> => {
     if (!doc.exists) { res.status(404).json({ error: 'Not found' }); return; }
     const { id: _id, createdAt: _ca, ...updates } = req.body;
     await ref.update(updates);
+    invalidate(CACHE_KEY);
     res.json({ id: doc.id, ...doc.data(), ...updates });
   } catch (e) { res.status(500).json({ error: String(e) }); }
 });
@@ -72,6 +79,7 @@ router.delete('/ngl/:id', async (req, res): Promise<void> => {
     const doc = await ref.get();
     if (!doc.exists) { res.status(404).json({ error: 'Not found' }); return; }
     await ref.delete();
+    invalidate(CACHE_KEY);
     res.sendStatus(204);
   } catch (e) { res.status(500).json({ error: String(e) }); }
 });
