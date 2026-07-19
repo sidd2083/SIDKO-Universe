@@ -1,6 +1,7 @@
 import { initializeApp, cert, getApps, type App } from "firebase-admin/app";
 import { getFirestore, type Firestore } from "firebase-admin/firestore";
 import { getAuth, type Auth } from "firebase-admin/auth";
+import { getStorage, type Storage } from "firebase-admin/storage";
 
 // ── Full app: Firestore + Auth ─────────────────────────────────────────────────
 // Requires FIREBASE_SERVICE_ACCOUNT_KEY (JSON string from Firebase console).
@@ -88,4 +89,18 @@ function getAuthApp(): App {
  */
 export function getAdminAuth(): Auth {
   return getAuth(getAuthApp());
+}
+
+// ── Storage ───────────────────────────────────────────────────────────────────
+let storageInstance: Storage | null = null;
+
+/**
+ * Firebase Storage Admin client.
+ * Requires the full service account (FIREBASE_SERVICE_ACCOUNT_KEY).
+ */
+export function getAdminStorage(): Storage {
+  if (!storageInstance) {
+    storageInstance = getStorage(initFullApp());
+  }
+  return storageInstance;
 }
