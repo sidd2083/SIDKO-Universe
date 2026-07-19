@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { setAdminSession } from '@/contexts/AuthContext';
 import { setAdminToken } from '@/lib/adminAuth';
+import { apiUrl } from '@/lib/apiBase';
 
 export default function AdminLogin() {
   const [username, setUsername] = useState('');
@@ -32,7 +33,7 @@ export default function AdminLogin() {
     setError('');
 
     try {
-      const res = await fetch('/api/auth/login', {
+      const res = await fetch(apiUrl('/api/auth/login'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

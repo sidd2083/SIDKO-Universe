@@ -10,7 +10,13 @@
  * (customFetch) so that useGetAdminSession / /api/auth/me also sees it.
  */
 
-import { setAuthTokenGetter } from '@workspace/api-client-react';
+import { setAuthTokenGetter, setBaseUrl } from '@workspace/api-client-react';
+import { API_BASE } from './apiBase';
+
+// Point the generated API client at the correct server.
+// On Replit: API_BASE is '' so relative /api paths work via Vite proxy.
+// On Vercel: API_BASE is the deployed API URL (set via VITE_API_URL env var).
+setBaseUrl(API_BASE || null);
 
 const TOKEN_KEY = 'sidko_admin_token';
 

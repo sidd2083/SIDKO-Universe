@@ -54,8 +54,15 @@ app.use(
   }),
 );
 
-// CORS: allow Replit preview domains and localhost only.
-// In production (Vercel) all traffic is same-origin, so CORS is a no-op there.
+// CORS: allow Replit preview domains, localhost, Vercel domains, and any
+// explicit origins listed in ALLOWED_ORIGINS (comma-separated env var).
+const _allowedOrigins = new Set<string>(
+  (process.env.ALLOWED_ORIGINS ?? process.env.ALLOWED_ORIGIN ?? '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean),
+);
+
 app.use(
   cors({
     origin: (origin, callback) => {
@@ -65,12 +72,20 @@ app.use(
       if (/^https:\/\/[a-z0-9-]+\.replit\.dev$/i.test(origin)) {
         return callback(null, true);
       }
+      // Replit deployed apps *.replit.app
+      if (/^https:\/\/[a-z0-9-]+\.replit\.app$/i.test(origin)) {
+        return callback(null, true);
+      }
+      // Vercel *.vercel.app preview and production domains
+      if (/^https:\/\/[a-z0-9-]+\.vercel\.app$/i.test(origin)) {
+        return callback(null, true);
+      }
       // Localhost (dev)
       if (/^https?:\/\/localhost(:\d+)?$/.test(origin)) {
         return callback(null, true);
       }
-      // Optional explicit production override
-      if (process.env.ALLOWED_ORIGIN && origin === process.env.ALLOWED_ORIGIN) {
+      // Explicit allow-list (ALLOWED_ORIGINS env var, comma-separated)
+      if (_allowedOrigins.has(origin)) {
         return callback(null, true);
       }
       callback(null, false);

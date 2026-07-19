@@ -5,6 +5,9 @@ import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
 import { Link, useLocation } from 'wouter';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
+import { setAdminToken } from '@/lib/adminAuth';
+import { setAdminSession } from '@/contexts/AuthContext';
+import { apiUrl } from '@/lib/apiBase';
 
 export default function Login() {
   const [username, setUsername] = useState('');
@@ -17,26 +20,46 @@ export default function Login() {
     e.preventDefault();
     if (!username.trim() || !password) return;
 
-    if (!isFirebaseConfigured) {
-      toast({
-        title: "Sign-in is not set up yet",
-        description: "Visitor accounts aren't available yet.",
-        variant: "destructive"
-      });
-      return;
-    }
-
     setIsLoading(true);
     try {
+      // Always try the admin API first. If it succeeds, the user is the site
+      // owner — redirect straight to the dashboard instead of treating them
+      // as a regular visitor.
+      const adminRes = await fetch(apiUrl('/api/auth/login'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: username.trim(), password }),
+      });
+
+      if (adminRes.ok) {
+        const data = await adminRes.json();
+        if (data.token) setAdminToken(data.token);
+        setAdminSession();
+        window.dispatchEvent(new Event('sidko_admin_changed'));
+        toast({ title: 'Welcome back, Siddhant!' });
+        setLocation('/dashboard');
+        return;
+      }
+
+      // Not admin — fall through to Firebase visitor login
+      if (!isFirebaseConfigured) {
+        toast({
+          title: 'Sign-in is not set up yet',
+          description: 'Visitor accounts aren\'t available yet.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
       const email = `${username.toLowerCase().trim()}@sidkouniverse.local`;
       await signInWithEmailAndPassword(getAuth(), email, password);
-      toast({ title: "Welcome back!" });
+      toast({ title: 'Welcome back!' });
       setLocation('/');
     } catch (error: any) {
       toast({
-        title: "Login failed",
-        description: "Invalid username or password.",
-        variant: "destructive"
+        title: 'Login failed',
+        description: 'Invalid username or password.',
+        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);

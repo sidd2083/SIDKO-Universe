@@ -9,6 +9,7 @@
  */
 
 import { withAdminHeaders } from './adminAuth';
+import { apiUrl } from './apiBase';
 
 /** Sentinel that the server replaces with a real Firestore server timestamp. */
 export const SERVER_TIMESTAMP = '__serverTimestamp__';
@@ -34,7 +35,7 @@ export async function addFirestoreDoc(
   collectionName: string,
   data: Record<string, unknown>,
 ): Promise<{ id: string }> {
-  return request(`/api/firestore/${collectionName}`, {
+  return request(apiUrl(`/api/firestore/${collectionName}`), {
     method: 'POST',
     body: JSON.stringify(data),
   });
@@ -45,14 +46,14 @@ export async function updateFirestoreDoc(
   id: string,
   data: Record<string, unknown>,
 ): Promise<void> {
-  await request(`/api/firestore/${collectionName}/${id}`, {
+  await request(apiUrl(`/api/firestore/${collectionName}/${id}`), {
     method: 'PUT',
     body: JSON.stringify(data),
   });
 }
 
 export async function deleteFirestoreDoc(collectionName: string, id: string): Promise<void> {
-  await request(`/api/firestore/${collectionName}/${id}`, {
+  await request(apiUrl(`/api/firestore/${collectionName}/${id}`), {
     method: 'DELETE',
   });
 }

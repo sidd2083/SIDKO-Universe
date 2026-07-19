@@ -1,4 +1,5 @@
 import { withAdminHeaders } from './adminAuth';
+import { apiUrl } from './apiBase';
 
 /**
  * Upload a file to the best available storage backend.
@@ -82,7 +83,7 @@ async function uploadToApiServer(file: File): Promise<string> {
   const form = new FormData();
   form.append('file', file);
 
-  const res = await fetch('/api/upload', {
+  const res = await fetch(apiUrl('/api/upload'), {
     method: 'POST',
     credentials: 'include',
     headers: withAdminHeaders(),
