@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { PageWrapper } from '@/components/layout/PageWrapper';
 import { apiUrl } from '@/lib/apiBase';
 import { MemoryCard, Memory } from '@/components/cards/MemoryCard';
