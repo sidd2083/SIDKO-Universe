@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
 import { PageWrapper } from '@/components/layout/PageWrapper';
+import { apiUrl } from '@/lib/apiBase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLocation } from 'wouter';
 import { withAdminHeaders } from '@/lib/adminAuth';
@@ -32,7 +32,7 @@ export default function Journal() {
 
   const fetchEntries = async () => {
     try {
-      const res = await fetch('/api/journal', { headers: withAdminHeaders(), credentials: 'include' });
+      const res = await fetch(apiUrl('/api/journal'), { headers: withAdminHeaders(), credentials: 'include' });
       if (!res.ok) throw new Error();
       setEntries(await res.json());
     } catch {
@@ -53,7 +53,7 @@ export default function Journal() {
     if (!content) return;
     setIsSaving(true);
     try {
-      const res = await fetch('/api/journal', {
+      const res = await fetch(apiUrl('/api/journal'), {
         method: 'POST',
         headers: withAdminHeaders({ 'Content-Type': 'application/json' }),
         credentials: 'include',

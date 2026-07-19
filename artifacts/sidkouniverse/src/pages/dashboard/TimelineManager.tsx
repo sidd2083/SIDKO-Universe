@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
 import { PageWrapper } from '@/components/layout/PageWrapper';
+import { apiUrl } from '@/lib/apiBase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLocation } from 'wouter';
 import { withAdminHeaders } from '@/lib/adminAuth';
@@ -49,7 +49,7 @@ export default function TimelineManager() {
 
   const fetchEvents = async () => {
     try {
-      const res = await fetch('/api/timeline');
+      const res = await fetch(apiUrl('/api/timeline'));
       if (!res.ok) throw new Error();
       setEvents(await res.json());
     } catch {
@@ -93,7 +93,7 @@ export default function TimelineManager() {
         if (!res.ok) throw new Error();
         toast({ title: 'Event updated' });
       } else {
-        const res = await fetch('/api/timeline', {
+        const res = await fetch(apiUrl('/api/timeline'), {
           method: 'POST',
           headers: withAdminHeaders({ 'Content-Type': 'application/json' }),
           credentials: 'include',

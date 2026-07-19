@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useCallback } from 'react';
 import { PageWrapper } from '@/components/layout/PageWrapper';
+import { apiUrl } from '@/lib/apiBase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLocation } from 'wouter';
 import { withAdminHeaders } from '@/lib/adminAuth';
@@ -36,7 +36,7 @@ export default function GoalManager() {
 
   const fetchGoals = useCallback(async () => {
     try {
-      const res = await fetch('/api/goals');
+      const res = await fetch(apiUrl('/api/goals'));
       if (!res.ok) throw new Error();
       setGoals(await res.json());
     } catch {
@@ -57,7 +57,7 @@ export default function GoalManager() {
     if (!title) return;
     setIsSaving(true);
     try {
-      const res = await fetch('/api/goals', {
+      const res = await fetch(apiUrl('/api/goals'), {
         method: 'POST',
         headers: withAdminHeaders({ 'Content-Type': 'application/json' }),
         credentials: 'include',

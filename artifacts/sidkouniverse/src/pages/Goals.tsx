@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
 import { PageWrapper } from '@/components/layout/PageWrapper';
+import { apiUrl } from '@/lib/apiBase';
 import { GoalCard, Goal } from '@/components/cards/GoalCard';
 import { Skeleton } from '@/components/shared/Skeleton';
 import { EmptyState } from '@/components/shared/EmptyState';
@@ -10,7 +10,7 @@ export default function Goals() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/goals')
+    fetch(apiUrl('/api/goals'))
       .then(r => r.json())
       .then(data => { if (Array.isArray(data)) setGoals(data); })
       .catch(() => {})

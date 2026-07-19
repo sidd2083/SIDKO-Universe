@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
 import { PageWrapper } from '@/components/layout/PageWrapper';
+import { apiUrl } from '@/lib/apiBase';
 import { Send, MessageSquare, ShieldCheck, Lock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -22,7 +22,7 @@ export default function Anonymous() {
   const { toast } = useToast();
 
   useEffect(() => {
-    fetch('/api/ngl')
+    fetch(apiUrl('/api/ngl'))
       .then(r => r.json())
       .then(data => { setMessages(data); setLoading(false); })
       .catch(() => setLoading(false));
@@ -33,7 +33,7 @@ export default function Anonymous() {
     if (!question.trim()) return;
     setIsSubmitting(true);
     try {
-      const res = await fetch('/api/ngl', {
+      const res = await fetch(apiUrl('/api/ngl'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ question: question.trim() }),

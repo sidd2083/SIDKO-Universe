@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
 import { PageWrapper } from '@/components/layout/PageWrapper';
+import { apiUrl } from '@/lib/apiBase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLocation, Link } from 'wouter';
 import { withAdminHeaders } from '@/lib/adminAuth';
@@ -29,19 +29,19 @@ export default function Dashboard() {
     if (!isAdmin) return;
 
     // Fetch recent memories
-    fetch('/api/memories')
+    fetch(apiUrl('/api/memories'))
       .then(r => r.json())
       .then(data => { if (Array.isArray(data)) setMemories(data.slice(0, 4)); })
       .catch(() => {});
 
     // Fetch recent thoughts (all, including drafts)
-    fetch('/api/thoughts/all', { headers: withAdminHeaders(), credentials: 'include' })
+    fetch(apiUrl('/api/thoughts/all'), { headers: withAdminHeaders(), credentials: 'include' })
       .then(r => r.json())
       .then(data => { if (Array.isArray(data)) setThoughts(data.slice(0, 3)); })
       .catch(() => {});
 
     // Fetch pending NGL count
-    fetch('/api/ngl/all', { headers: withAdminHeaders(), credentials: 'include' })
+    fetch(apiUrl('/api/ngl/all'), { headers: withAdminHeaders(), credentials: 'include' })
       .then(r => r.json())
       .then((data: NglMessage[]) => {
         if (Array.isArray(data)) setPendingCount(data.filter(m => !m.approved).length);

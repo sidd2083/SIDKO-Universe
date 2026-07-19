@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
 import { PageWrapper } from '@/components/layout/PageWrapper';
+import { apiUrl } from '@/lib/apiBase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLocation } from 'wouter';
 import { useToast } from '@/hooks/use-toast';
@@ -23,7 +23,7 @@ export default function Settings() {
   }, [isAdmin, isLoading, setLocation]);
 
   useEffect(() => {
-    fetch('/api/settings')
+    fetch(apiUrl('/api/settings'))
       .then(r => r.json())
       .then((data: SiteSettings) => setSettings({ ...DEFAULT, ...data }))
       .catch(() => {})
@@ -34,7 +34,7 @@ export default function Settings() {
     e.preventDefault();
     setIsSaving(true);
     try {
-      const res = await fetch('/api/settings', {
+      const res = await fetch(apiUrl('/api/settings'), {
         method: 'PUT',
         credentials: 'include',
         headers: withAdminHeaders({ 'Content-Type': 'application/json' }),

@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useRef, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react';
+import { apiUrl } from '@/lib/apiBase';
 
 interface Track {
   id: string;
@@ -45,7 +46,7 @@ export const MusicProvider = ({ children }: { children: React.ReactNode }) => {
 
   // Load tracks from the API server (where dashboard uploads go)
   useEffect(() => {
-    fetch('/api/music')
+    fetch(apiUrl('/api/music'))
       .then(r => r.json())
       .then(data => {
         if (Array.isArray(data)) setTracks(data);

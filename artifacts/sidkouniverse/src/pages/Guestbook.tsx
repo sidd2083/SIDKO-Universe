@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
 import { PageWrapper } from '@/components/layout/PageWrapper';
+import { apiUrl } from '@/lib/apiBase';
 import { Send, BookOpen, MapPin } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -24,7 +24,7 @@ export default function Guestbook() {
   const { toast } = useToast();
 
   const load = () => {
-    fetch('/api/guestbook')
+    fetch(apiUrl('/api/guestbook'))
       .then(r => r.json())
       .then(data => { setEntries(data); setLoading(false); })
       .catch(() => setLoading(false));
@@ -37,7 +37,7 @@ export default function Guestbook() {
     if (!name.trim() || !message.trim()) return;
     setIsSubmitting(true);
     try {
-      const res = await fetch('/api/guestbook', {
+      const res = await fetch(apiUrl('/api/guestbook'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: name.trim(), message: message.trim(), location: location.trim() }),

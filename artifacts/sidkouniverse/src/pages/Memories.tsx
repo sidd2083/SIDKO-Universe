@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
 import { AnimatePresence } from 'framer-motion';
+import { apiUrl } from '@/lib/apiBase';
 import { PageWrapper } from '@/components/layout/PageWrapper';
 import { motion } from 'framer-motion';
 import { Image as ImageIcon, MapPin, Calendar } from 'lucide-react';
@@ -69,7 +69,7 @@ export default function Memories() {
   const [filter, setFilter] = useState('All');
 
   useEffect(() => {
-    fetch('/api/memories')
+    fetch(apiUrl('/api/memories'))
       .then(r => r.json())
       .then(data => { setMemories(Array.isArray(data) ? data : []); setLoading(false); })
       .catch(() => setLoading(false));

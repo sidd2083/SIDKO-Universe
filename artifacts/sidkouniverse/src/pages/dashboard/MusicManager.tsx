@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useCallback } from 'react';
 import { PageWrapper } from '@/components/layout/PageWrapper';
+import { apiUrl } from '@/lib/apiBase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLocation } from 'wouter';
 import { useToast } from '@/hooks/use-toast';
@@ -34,7 +34,7 @@ export default function MusicManager() {
 
   const fetchTracks = useCallback(async () => {
     try {
-      const res = await fetch('/api/music', { credentials: 'include' });
+      const res = await fetch(apiUrl('/api/music'), { credentials: 'include' });
       if (!res.ok) throw new Error('Failed to load');
       const data = await res.json();
       setTracks(Array.isArray(data) ? data : []);
@@ -57,7 +57,7 @@ export default function MusicManager() {
     setIsUploading(true);
     try {
       const url = await uploadFile(file);
-      const res = await fetch('/api/music', {
+      const res = await fetch(apiUrl('/api/music'), {
         method: 'POST',
         headers: withAdminHeaders({ 'Content-Type': 'application/json' }),
         credentials: 'include',

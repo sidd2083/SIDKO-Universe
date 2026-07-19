@@ -1,1 +1,2 @@
-- [SidkoUniverse storage architecture](sidkouniverse-storage.md) — everything is local JSON on the API server; Firestore is NOT used despite Firebase client being configured.
+- [SidkoUniverse storage architecture](sidkouniverse-storage.md) — Firestore for all content via Firebase Admin SDK on the API server; Firebase client SDK reads in browser.
+- [SidkoUniverse Vercel deployment](sidkouniverse-vercel.md) — frontend on Vercel is static; all fetch('/api/...) calls must use apiUrl() from @/lib/apiBase so VITE_API_URL is respected; CORS allows *.vercel.app.

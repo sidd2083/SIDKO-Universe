@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
 import { PageWrapper } from '@/components/layout/PageWrapper';
+import { apiUrl } from '@/lib/apiBase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLocation } from 'wouter';
 import { useToast } from '@/hooks/use-toast';
@@ -21,7 +21,7 @@ export default function ThoughtEditor() {
   const [isSaving, setIsSaving] = useState(false);
 
   const load = () => {
-    fetch('/api/thoughts/all', { headers: withAdminHeaders(), credentials: 'include' })
+    fetch(apiUrl('/api/thoughts/all'), { headers: withAdminHeaders(), credentials: 'include' })
       .then(r => r.json())
       .then(data => { if (Array.isArray(data)) setThoughts(data); })
       .catch(() => {});
@@ -38,7 +38,7 @@ export default function ThoughtEditor() {
     if (!title.trim() || !content.trim()) { toast({ title: 'Title and content required', variant: 'destructive' }); return; }
     setIsSaving(true);
     try {
-      const res = await fetch('/api/thoughts', {
+      const res = await fetch(apiUrl('/api/thoughts'), {
         method: 'POST',
         headers: withAdminHeaders({ 'Content-Type': 'application/json' }),
         credentials: 'include',

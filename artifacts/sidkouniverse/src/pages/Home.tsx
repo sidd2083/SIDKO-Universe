@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
 import { PageWrapper } from '@/components/layout/PageWrapper';
+import { apiUrl } from '@/lib/apiBase';
 import { MemoryCard, Memory } from '@/components/cards/MemoryCard';
 import { ThoughtCard, Thought } from '@/components/cards/ThoughtCard';
 import { Skeleton } from '@/components/shared/Skeleton';
@@ -76,17 +76,17 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    fetch('/api/settings')
+    fetch(apiUrl('/api/settings'))
       .then(r => r.json())
       .then((data: Partial<SiteSettings>) => { setSettings({ ...DEFAULT_SETTINGS, ...data }); setSettingsLoaded(true); })
       .catch(() => setSettingsLoaded(true));
-    fetch('/api/memories')
+    fetch(apiUrl('/api/memories'))
       .then(r => r.json()).then(d => { setMemories(Array.isArray(d) ? d.slice(0, 8) : []); setMemoriesLoading(false); })
       .catch(() => setMemoriesLoading(false));
-    fetch('/api/thoughts')
+    fetch(apiUrl('/api/thoughts'))
       .then(r => r.json()).then(d => { setThoughts(Array.isArray(d) ? d.slice(0, 4) : []); setThoughtsLoading(false); })
       .catch(() => setThoughtsLoading(false));
-    fetch('/api/ngl')
+    fetch(apiUrl('/api/ngl'))
       .then(r => r.json()).then(d => { setNglMessages(Array.isArray(d) ? d.slice(0, 3) : []); setNglLoading(false); })
       .catch(() => setNglLoading(false));
   }, []);

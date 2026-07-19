@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
 import { PageWrapper } from '@/components/layout/PageWrapper';
+import { apiUrl } from '@/lib/apiBase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLocation } from 'wouter';
 import { useToast } from '@/hooks/use-toast';
@@ -20,7 +20,7 @@ export default function BlogEditor() {
   const [isSaving, setIsSaving] = useState(false);
 
   const load = () => {
-    fetch('/api/posts/all', { headers: withAdminHeaders(), credentials: 'include' })
+    fetch(apiUrl('/api/posts/all'), { headers: withAdminHeaders(), credentials: 'include' })
       .then(r => r.json())
       .then(data => { if (Array.isArray(data)) setPosts(data); })
       .catch(() => {});
@@ -40,7 +40,7 @@ export default function BlogEditor() {
       const slug = title.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
       const excerpt = content.trim().slice(0, 200);
       const readingTime = Math.max(1, Math.ceil(content.length / 1000));
-      const res = await fetch('/api/posts', {
+      const res = await fetch(apiUrl('/api/posts'), {
         method: 'POST',
         headers: withAdminHeaders({ 'Content-Type': 'application/json' }),
         credentials: 'include',

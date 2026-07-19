@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
 import { PageWrapper } from '@/components/layout/PageWrapper';
+import { apiUrl } from '@/lib/apiBase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLocation } from 'wouter';
 import { useToast } from '@/hooks/use-toast';
@@ -17,7 +17,7 @@ export default function AnonymousCenter() {
   const [replies, setReplies] = useState<Record<string, string>>({});
 
   const load = () => {
-    fetch('/api/ngl/all', { headers: withAdminHeaders(), credentials: 'include' })
+    fetch(apiUrl('/api/ngl/all'), { headers: withAdminHeaders(), credentials: 'include' })
       .then(r => r.json())
       .then(data => { if (Array.isArray(data)) setMessages(data); })
       .catch(() => {});

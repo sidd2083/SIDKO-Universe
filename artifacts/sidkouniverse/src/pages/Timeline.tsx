@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
 import { PageWrapper } from '@/components/layout/PageWrapper';
+import { apiUrl } from '@/lib/apiBase';
 import { Skeleton } from '@/components/shared/Skeleton';
 import { motion } from 'framer-motion';
 import { Calendar, MapPin, Star } from 'lucide-react';
@@ -40,7 +40,7 @@ export default function Timeline() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/timeline')
+    fetch(apiUrl('/api/timeline'))
       .then(r => r.json())
       .then(data => { if (Array.isArray(data)) setEvents(data); })
       .catch(() => {})

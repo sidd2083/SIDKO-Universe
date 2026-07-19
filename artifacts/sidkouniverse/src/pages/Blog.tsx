@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
 import { PageWrapper } from '@/components/layout/PageWrapper';
+import { apiUrl } from '@/lib/apiBase';
 import { Link } from 'wouter';
 import { motion } from 'framer-motion';
 import { BookOpen, Image as ImageIcon, PenTool } from 'lucide-react';
@@ -12,7 +12,7 @@ export default function Blog() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/posts')
+    fetch(apiUrl('/api/posts'))
       .then(r => r.json())
       .then(data => { setPosts(Array.isArray(data) ? data : []); setLoading(false); })
       .catch(() => setLoading(false));

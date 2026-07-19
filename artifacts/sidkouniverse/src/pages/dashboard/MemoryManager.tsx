@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
 import { PageWrapper } from '@/components/layout/PageWrapper';
+import { apiUrl } from '@/lib/apiBase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLocation } from 'wouter';
 import { useToast } from '@/hooks/use-toast';
@@ -25,7 +25,7 @@ export default function MemoryManager() {
   const [isUploading, setIsUploading] = useState(false);
 
   const load = () => {
-    fetch('/api/memories')
+    fetch(apiUrl('/api/memories'))
       .then(r => r.json())
       .then(data => { if (Array.isArray(data)) setMemories(data); })
       .catch(() => {});
@@ -44,7 +44,7 @@ export default function MemoryManager() {
     setIsUploading(true);
     try {
       const imageUrl = await uploadFile(file);
-      const res = await fetch('/api/memories', {
+      const res = await fetch(apiUrl('/api/memories'), {
         method: 'POST',
         headers: withAdminHeaders({ 'Content-Type': 'application/json' }),
         credentials: 'include',

@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
 import { PageWrapper } from '@/components/layout/PageWrapper';
+import { apiUrl } from '@/lib/apiBase';
 import { Link } from 'wouter';
 import { motion } from 'framer-motion';
 import { BookOpen, PenTool } from 'lucide-react';
@@ -12,7 +12,7 @@ export default function Thoughts() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/thoughts')
+    fetch(apiUrl('/api/thoughts'))
       .then(r => r.json())
       .then(data => { setThoughts(Array.isArray(data) ? data : []); setLoading(false); })
       .catch(() => setLoading(false));
