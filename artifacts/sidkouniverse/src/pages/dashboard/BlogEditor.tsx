@@ -60,7 +60,7 @@ export default function BlogEditor() {
 
   const handleTogglePublish = async (p: Post) => {
     try {
-      await fetch(`/api/posts/${p.id}`, {
+      await fetch(apiUrl(`/api/posts/${p.id}`), {
         method: 'PATCH',
         headers: withAdminHeaders({ 'Content-Type': 'application/json' }),
         credentials: 'include',
@@ -74,7 +74,7 @@ export default function BlogEditor() {
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this article?')) return;
     try {
-      await fetch(`/api/posts/${id}`, { method: 'DELETE', headers: withAdminHeaders(), credentials: 'include' });
+      await fetch(apiUrl(`/api/posts/${id}`), { method: 'DELETE', headers: withAdminHeaders(), credentials: 'include' });
       toast({ title: 'Deleted' });
       load();
     } catch { toast({ title: 'Failed to delete', variant: 'destructive' }); }

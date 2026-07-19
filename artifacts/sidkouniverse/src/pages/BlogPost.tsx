@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { PageWrapper } from '@/components/layout/PageWrapper';
 import { useRoute } from 'wouter';
-import { db } from '@/lib/firebase';
-import { collection, query, where, getDocs, limit } from 'firebase/firestore';
+import { apiUrl } from '@/lib/apiBase';
 import { format } from 'date-fns';
 import { Skeleton } from '@/components/shared/Skeleton';
 import { ArrowLeft, Clock } from 'lucide-react';
@@ -17,13 +16,12 @@ export default function BlogPost() {
     async function fetchPost() {
       if (!params?.slug) return;
       try {
-        const q = query(collection(db, 'blogs'), where('slug', '==', params.slug), limit(1));
-        const snap = await getDocs(q);
-        if (!snap.empty) {
-          setPost({ id: snap.docs[0].id, ...snap.docs[0].data() });
-        }
+        const res = await fetch(apiUrl(`/api/posts/${params.slug}`));
+        if (!res.ok) { setPost(null); return; }
+        setPost(await res.json());
       } catch (err) {
         console.error(err);
+        setPost(null);
       } finally {
         setLoading(false);
       }
@@ -60,17 +58,20 @@ export default function BlogPost() {
     );
   }
 
+  // createdAt comes from the API as an ISO string
+  const createdDate = post.createdAt ? new Date(post.createdAt) : null;
+
   return (
     <PageWrapper>
       <div className="max-w-3xl mx-auto py-8">
         <Link href="/blog" className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground mb-8 transition-colors">
           <ArrowLeft className="w-4 h-4" /> Back to Blog
         </Link>
-        
+
         <h1 className="text-4xl md:text-5xl font-bold mb-6 leading-tight">{post.title}</h1>
-        
+
         <div className="flex items-center gap-4 text-sm text-muted-foreground mb-10 pb-8 border-b border-border">
-          <span>{post.createdAt ? format(post.createdAt.toDate(), 'MMMM d, yyyy') : ''}</span>
+          {createdDate && <span>{format(createdDate, 'MMMM d, yyyy')}</span>}
           <span>•</span>
           <div className="flex items-center gap-1">
             <Clock className="w-4 h-4" />

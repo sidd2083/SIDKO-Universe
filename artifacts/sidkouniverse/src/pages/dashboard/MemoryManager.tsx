@@ -77,7 +77,7 @@ export default function MemoryManager() {
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this memory?')) return;
     try {
-      await fetch(`/api/memories/${id}`, { method: 'DELETE', headers: withAdminHeaders(), credentials: 'include' });
+      await fetch(apiUrl(`/api/memories/${id}`), { method: 'DELETE', headers: withAdminHeaders(), credentials: 'include' });
       toast({ title: 'Deleted' }); load();
     } catch { toast({ title: 'Failed to delete', variant: 'destructive' }); }
   };

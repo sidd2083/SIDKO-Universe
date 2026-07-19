@@ -32,7 +32,7 @@ export default function AnonymousCenter() {
   if (isLoading || !isAdmin) return null;
 
   const patch = async (id: string, body: object) => {
-    const res = await fetch(`/api/ngl/${id}`, {
+    const res = await fetch(apiUrl(`/api/ngl/${id}`), {
       method: 'PATCH',
       headers: withAdminHeaders({ 'Content-Type': 'application/json' }),
       credentials: 'include',
@@ -50,7 +50,7 @@ export default function AnonymousCenter() {
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this message?')) return;
     try {
-      await fetch(`/api/ngl/${id}`, { method: 'DELETE', headers: withAdminHeaders(), credentials: 'include' });
+      await fetch(apiUrl(`/api/ngl/${id}`), { method: 'DELETE', headers: withAdminHeaders(), credentials: 'include' });
       toast({ title: 'Deleted' }); load();
     } catch { toast({ title: 'Failed to delete', variant: 'destructive' }); }
   };
