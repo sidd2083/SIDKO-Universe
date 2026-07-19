@@ -13,6 +13,7 @@ import memoriesRouter from "./memories.js";
 import goalsRouter from "./goals.js";
 import timelineRouter from "./timeline.js";
 import journalRouter from "./journal.js";
+import conversationsRouter from "./conversations.js";
 
 const router: IRouter = Router();
 
@@ -30,5 +31,6 @@ router.use(memoriesRouter);
 router.use(goalsRouter);
 router.use(timelineRouter);
 router.use(journalRouter);
+router.use(conversationsRouter);
 
 export default router;

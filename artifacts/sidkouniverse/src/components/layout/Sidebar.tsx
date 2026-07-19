@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import {
   Home, Image as ImageIcon, BookOpen, PenTool, User,
   MessageSquare, MessageCircle,
-  LogOut, Sun, Moon, LayoutDashboard, GraduationCap, Users,
+  LogOut, Sun, Moon, LayoutDashboard, GraduationCap, Users, Inbox,
 } from 'lucide-react';
 import { useAuth, clearAdminSession } from '@/contexts/AuthContext';
 import { clearAdminToken } from '@/lib/adminAuth';
@@ -86,12 +86,23 @@ export function Sidebar() {
             <Link href="/dashboard">
               <span className={cn(
                 "flex items-center gap-3 px-3 py-2 rounded-xl transition-all duration-150 text-sm cursor-pointer",
-                location.startsWith('/dashboard')
+                location === '/dashboard'
                   ? "bg-primary/10 text-primary font-semibold"
                   : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
               )}>
                 <LayoutDashboard className="w-4 h-4 shrink-0" />
                 Dashboard
+              </span>
+            </Link>
+            <Link href="/dashboard/messages">
+              <span className={cn(
+                "flex items-center gap-3 px-3 py-2 rounded-xl transition-all duration-150 text-sm cursor-pointer",
+                location.startsWith('/dashboard/messages')
+                  ? "bg-primary/10 text-primary font-semibold"
+                  : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+              )}>
+                <Inbox className="w-4 h-4 shrink-0" />
+                DMs
               </span>
             </Link>
           </>

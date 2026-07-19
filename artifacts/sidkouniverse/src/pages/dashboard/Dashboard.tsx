@@ -6,7 +6,7 @@ import { useLocation, Link } from 'wouter';
 import { withAdminHeaders } from '@/lib/adminAuth';
 import {
   Settings, Image as ImageIcon, BookOpen, MessageSquare,
-  PenTool, Music, Clock, Target
+  PenTool, Music, Clock, Target, MessageCircle
 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -63,6 +63,7 @@ export default function Dashboard() {
     { label: 'Goals', icon: Target, path: '/dashboard/goals', color: 'text-amber-500 bg-amber-500/10' },
     { label: 'Anonymous', icon: MessageSquare, path: '/dashboard/anonymous', color: 'text-orange-500 bg-orange-500/10', badge: pendingCount || undefined },
     { label: 'Music', icon: Music, path: '/dashboard/music', color: 'text-pink-500 bg-pink-500/10' },
+    { label: 'DMs', icon: MessageCircle, path: '/dashboard/messages', color: 'text-indigo-500 bg-indigo-500/10' },
     { label: 'Settings', icon: Settings, path: '/dashboard/settings', color: 'text-slate-500 bg-slate-500/10' },
   ];
 

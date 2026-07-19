@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useTheme } from 'next-themes';
-import { Sun, Moon, Send } from 'lucide-react';
+import { Sun, Moon, Send, Download } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
 import { SidLogoIcon, SidWordmark } from './SidLogo';
 import { MobileDrawer } from './MobileDrawer';
@@ -33,6 +33,30 @@ export function MobileHeader() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const pageTitle = getTitle(location);
 
+  // PWA install prompt
+  const installPromptRef = useRef<any>(null);
+  const [canInstall, setCanInstall] = useState(false);
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      e.preventDefault();
+      installPromptRef.current = e;
+      setCanInstall(true);
+    };
+    window.addEventListener('beforeinstallprompt', handler);
+    // Already installed — hide button
+    window.addEventListener('appinstalled', () => setCanInstall(false));
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+
+  const handleInstall = async () => {
+    if (!installPromptRef.current) return;
+    installPromptRef.current.prompt();
+    const { outcome } = await installPromptRef.current.userChoice;
+    if (outcome === 'accepted') setCanInstall(false);
+    installPromptRef.current = null;
+  };
+
   return (
     <>
       <MobileDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
@@ -63,8 +87,20 @@ export function MobileHeader() {
             </span>
           </Link>
 
-          {/* Right: DM me + theme toggle */}
+          {/* Right: install + DM + theme */}
           <div className="flex items-center gap-1">
+            {/* PWA install — only shown when browser says it's installable */}
+            {canInstall && (
+              <button
+                onClick={handleInstall}
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-primary/10 text-primary text-xs font-semibold cursor-pointer active:scale-95 transition-transform select-none"
+                aria-label="Install app"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span className="hidden xs:inline">Install</span>
+              </button>
+            )}
+
             {/* DM me button */}
             <Link href="/messages">
               <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary/10 text-primary text-xs font-semibold cursor-pointer active:scale-95 transition-transform select-none">

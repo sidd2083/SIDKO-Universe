@@ -44,6 +44,7 @@ import MusicManager from '@/pages/dashboard/MusicManager';
 import Settings from '@/pages/dashboard/Settings';
 import Journal from '@/pages/dashboard/Journal';
 import TimelineManager from '@/pages/dashboard/TimelineManager';
+import MessagesAdmin from '@/pages/dashboard/MessagesAdmin';
 
 const queryClient = new QueryClient();
 
@@ -93,6 +94,7 @@ function Router() {
               <Route path="/dashboard/settings" component={Settings} />
               <Route path="/dashboard/journal" component={Journal} />
               <Route path="/dashboard/timeline" component={TimelineManager} />
+              <Route path="/dashboard/messages" component={MessagesAdmin} />
 
               <Route component={NotFound} />
             </Switch>

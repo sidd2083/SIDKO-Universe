@@ -98,7 +98,7 @@ export default function Home() {
     <PageWrapper>
       {/* ── Live Status Banner ── */}
       <AnimatePresence>
-        {settingsLoaded && settings.currentStatus && (
+        {settingsLoaded && (
           <motion.div
             key="status-banner"
             initial={{ opacity: 0, y: -16, scale: 0.97 }}
@@ -133,7 +133,7 @@ export default function Home() {
                     animate={{ opacity: 1, y: 0 }}
                     className="text-primary"
                   >
-                    {settings.currentStatus.toLowerCase().replace(/^(at\s|a\s|the\s)/i, '')}
+                    {(settings.currentStatus || 'coding something').toLowerCase().replace(/^(at\s|a\s|the\s)/i, '')}
                   </motion.span>
                 </p>
               </div>

@@ -1,0 +1,20 @@
+{
+  "name": "Siddhant — Figuring life out",
+  "short_name": "Siddhant",
+  "description": "Siddhant Lamichhane. Grade 11 student from Hetauda, Nepal. Building things, writing thoughts.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#6366f1",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["lifestyle", "social"],
+  "lang": "en"
+}

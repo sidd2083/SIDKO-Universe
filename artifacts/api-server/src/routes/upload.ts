@@ -62,11 +62,10 @@ router.post(
         metadata: { contentType: req.file.mimetype },
       });
 
-      // Make the file publicly readable so it can be embedded directly in pages
-      await fileRef.makePublic();
-
-      // Public GCS URL — no expiry, no tokens needed
-      const url = `https://storage.googleapis.com/${STORAGE_BUCKET}/${filename}`;
+      // Firebase Storage download URL — works regardless of bucket IAM settings,
+      // no signed URL expiry, no tokens needed for reading.
+      const encodedFilename = encodeURIComponent(filename);
+      const url = `https://firebasestorage.googleapis.com/v0/b/${STORAGE_BUCKET}/o/${encodedFilename}?alt=media`;
       res.json({ url });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
