@@ -4,6 +4,7 @@ import { useRoute, Link } from 'wouter';
 import { format } from 'date-fns';
 import { Skeleton } from '@/components/shared/Skeleton';
 import { ArrowLeft } from 'lucide-react';
+import { apiUrl } from '@/lib/apiBase';
 
 export default function MemoryDetail() {
   const [, params] = useRoute('/memories/:id');
@@ -12,7 +13,7 @@ export default function MemoryDetail() {
 
   useEffect(() => {
     if (!params?.id) return;
-    fetch(`/api/memories/${params.id}`)
+    fetch(apiUrl(`/api/memories/${params.id}`))
       .then(r => {
         if (!r.ok) throw new Error('Not found');
         return r.json();

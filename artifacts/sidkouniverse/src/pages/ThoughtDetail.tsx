@@ -4,6 +4,7 @@ import { useRoute, Link } from 'wouter';
 import { format } from 'date-fns';
 import { Skeleton } from '@/components/shared/Skeleton';
 import { ArrowLeft, Clock } from 'lucide-react';
+import { apiUrl } from '@/lib/apiBase';
 
 export default function ThoughtDetail() {
   const [, params] = useRoute('/thoughts/:id');
@@ -12,7 +13,7 @@ export default function ThoughtDetail() {
 
   useEffect(() => {
     if (!params?.id) return;
-    fetch(`/api/thoughts/${params.id}`)
+    fetch(apiUrl(`/api/thoughts/${params.id}`))
       .then(r => {
         if (!r.ok) throw new Error('Not found');
         return r.json();
