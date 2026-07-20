@@ -1,55 +1,74 @@
-import { withAdminHeaders } from './adminAuth';
-import { apiUrl } from './apiBase';
-
 /**
- * Upload a file to Firebase Storage via the API server.
- * Returns the permanent public Firebase Storage URL.
+ * uploadFile — universal image upload that works on Replit AND Vercel.
+ *
+ * Strategy: compress the image entirely in the browser using Canvas,
+ * convert to a JPEG base64 data URL, and return it directly.
+ * No server round-trip, no cloud storage billing, no filesystem dependency.
+ * The data URL is stored straight in Firestore as the image value.
+ *
+ * Typical output sizes after compression:
+ *   - Phone photo (12MP)  → ~150–250 KB data URL
+ *   - Screenshot          → ~80–150 KB data URL
+ * Well within Firestore's 1 MB document limit for a personal site.
  */
 export async function uploadFile(
   file: File,
   onProgress?: (pct: number) => void,
 ): Promise<string> {
-  const form = new FormData();
-  form.append('file', file);
+  if (!file.type.startsWith('image/')) {
+    throw new Error(
+      'Only image files can be uploaded here. For audio, paste a direct URL instead.',
+    );
+  }
+  return compressToDataUrl(file, onProgress);
+}
 
-  // Use XMLHttpRequest so we can report upload progress
+/** Resize + JPEG-compress an image file and return a base64 data URL. */
+function compressToDataUrl(
+  file: File,
+  onProgress?: (pct: number) => void,
+): Promise<string> {
   return new Promise((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
-    xhr.open('POST', apiUrl('/api/upload'));
+    onProgress?.(10);
 
-    // Attach admin auth headers
-    const headers = withAdminHeaders();
-    for (const [key, value] of Object.entries(headers)) {
-      xhr.setRequestHeader(key, value);
-    }
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Could not read file.'));
+    reader.onload = (ev) => {
+      onProgress?.(30);
+      const img = new Image();
+      img.onerror = () => reject(new Error('Could not decode image.'));
+      img.onload = () => {
+        onProgress?.(60);
 
-    xhr.withCredentials = true;
+        const MAX = 1400; // px — keeps quality while capping size
+        let { width, height } = img;
 
-    xhr.upload.onprogress = (e) => {
-      if (e.lengthComputable && onProgress) {
-        onProgress(Math.round((e.loaded / e.total) * 100));
-      }
-    };
-
-    xhr.onload = () => {
-      if (xhr.status >= 200 && xhr.status < 300) {
-        try {
-          const data = JSON.parse(xhr.responseText) as { url: string };
-          resolve(data.url);
-        } catch {
-          reject(new Error('Unexpected response from upload server.'));
+        if (width > MAX || height > MAX) {
+          if (width >= height) {
+            height = Math.round((height * MAX) / width);
+            width = MAX;
+          } else {
+            width = Math.round((width * MAX) / height);
+            height = MAX;
+          }
         }
-      } else {
-        let msg = `Upload failed (${xhr.status})`;
-        try {
-          const err = JSON.parse(xhr.responseText) as { error?: string };
-          if (err?.error) msg = err.error;
-        } catch {}
-        reject(new Error(msg));
-      }
-    };
 
-    xhr.onerror = () => reject(new Error('Network error during upload.'));
-    xhr.send(form);
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return reject(new Error('Canvas unavailable.'));
+        ctx.drawImage(img, 0, 0, width, height);
+
+        onProgress?.(90);
+
+        // JPEG at 0.82 quality — good visual fidelity, small file
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.82);
+        onProgress?.(100);
+        resolve(dataUrl);
+      };
+      img.src = ev.target?.result as string;
+    };
+    reader.readAsDataURL(file);
   });
 }

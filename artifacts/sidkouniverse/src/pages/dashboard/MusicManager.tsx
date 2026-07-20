@@ -4,9 +4,8 @@ import { apiUrl } from '@/lib/apiBase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLocation } from 'wouter';
 import { useToast } from '@/hooks/use-toast';
-import { uploadFile } from '@/lib/apiUpload';
 import { withAdminHeaders } from '@/lib/adminAuth';
-import { Loader2, Upload, Trash2, Music2 } from 'lucide-react';
+import { Loader2, Trash2, Music2, Link as LinkIcon, ExternalLink } from 'lucide-react';
 
 interface Track {
   id: string;
@@ -23,11 +22,10 @@ export default function MusicManager() {
 
   const [tracks, setTracks] = useState<Track[]>([]);
   const [tracksLoading, setTracksLoading] = useState(true);
-
   const [title, setTitle] = useState('');
-  const [file, setFile] = useState<File | null>(null);
+  const [url, setUrl] = useState('');
   const [cover, setCover] = useState('');
-  const [isUploading, setIsUploading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (!isLoading && !isAdmin) setLocation('/');
@@ -52,36 +50,39 @@ export default function MusicManager() {
 
   if (isLoading || !isAdmin) return null;
 
-  const handleUpload = async (e: React.FormEvent) => {
+  const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title || !file) return;
-    setIsUploading(true);
+    if (!title.trim() || !url.trim()) return;
+    setIsSaving(true);
     try {
-      const url = await uploadFile(file);
       const res = await fetch(apiUrl('/api/music'), {
         method: 'POST',
         headers: withAdminHeaders({ 'Content-Type': 'application/json' }),
         credentials: 'include',
-        body: JSON.stringify({ title: title.trim(), url, coverImage: cover || '' }),
+        body: JSON.stringify({ title: title.trim(), url: url.trim(), coverImage: cover.trim() }),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error((err as any).error ?? 'Upload failed');
+        throw new Error((err as any).error ?? 'Failed to add track');
       }
-      setTitle(''); setFile(null); setCover('');
-      toast({ title: 'Track added successfully' });
+      setTitle(''); setUrl(''); setCover('');
+      toast({ title: '🎵 Track added!' });
       fetchTracks();
     } catch (err: any) {
-      toast({ title: err?.message ?? 'Failed to upload track', variant: 'destructive' });
+      toast({ title: err?.message ?? 'Failed to add track', variant: 'destructive' });
     } finally {
-      setIsUploading(false);
+      setIsSaving(false);
     }
   };
 
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this track?')) return;
     try {
-      const res = await fetch(apiUrl(`/api/music/${id}`), { method: 'DELETE', headers: withAdminHeaders(), credentials: 'include' });
+      const res = await fetch(apiUrl(`/api/music/${id}`), {
+        method: 'DELETE',
+        headers: withAdminHeaders(),
+        credentials: 'include',
+      });
       if (!res.ok) throw new Error('Delete failed');
       toast({ title: 'Track deleted' });
       fetchTracks();
@@ -93,39 +94,67 @@ export default function MusicManager() {
   return (
     <PageWrapper>
       <div className="max-w-4xl mx-auto py-8">
-        <h1 className="text-3xl font-bold mb-8">Music Manager</h1>
+        <h1 className="text-3xl font-bold mb-2">Music Manager</h1>
+        <p className="text-muted-foreground text-sm mb-8">
+          Paste a direct audio URL (MP3, OGG, WAV). Works from any host — Google Drive, Dropbox, SoundCloud, etc.
+        </p>
 
         <div className="grid md:grid-cols-3 gap-8">
           {/* Add form */}
           <div className="md:col-span-1">
-            <form onSubmit={handleUpload} className="bg-card border border-border rounded-3xl p-6 shadow-sm">
-              <h2 className="font-bold mb-4">Add New Track</h2>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-xs font-medium text-muted-foreground mb-1">Track Title</label>
-                  <input type="text" value={title} onChange={e => setTitle(e.target.value)}
-                    className="w-full bg-background border border-border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" required />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-muted-foreground mb-1">Cover Image URL (Optional)</label>
-                  <input type="url" value={cover} onChange={e => setCover(e.target.value)}
-                    placeholder="https://..."
-                    className="w-full bg-background border border-border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-muted-foreground mb-1">
-                    MP3 File <span className="text-primary">(uploaded to server)</span>
-                  </label>
-                  <input type="file" accept="audio/mp3,audio/mpeg"
-                    onChange={e => setFile(e.target.files?.[0] || null)}
-                    className="w-full bg-background border border-border rounded-xl px-3 py-2 text-sm file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-medium file:bg-primary/10 file:text-primary hover:file:bg-primary/20 cursor-pointer" required />
-                </div>
-                <button type="submit" disabled={isUploading || !title || !file}
-                  className="w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-xl font-medium hover:opacity-90 transition-opacity disabled:opacity-50">
-                  {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-                  {isUploading ? 'Uploading…' : 'Upload Track'}
-                </button>
+            <form onSubmit={handleAdd} className="bg-card border border-border rounded-3xl p-6 shadow-sm space-y-4">
+              <h2 className="font-bold">Add Track</h2>
+
+              <div>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">Track Title *</label>
+                <input
+                  type="text"
+                  value={title}
+                  onChange={e => setTitle(e.target.value)}
+                  placeholder="e.g. Blinding Lights"
+                  required
+                  className="w-full bg-background border border-border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                />
               </div>
+
+              <div>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">
+                  Audio URL * <span className="text-primary">(direct .mp3 link)</span>
+                </label>
+                <input
+                  type="url"
+                  value={url}
+                  onChange={e => setUrl(e.target.value)}
+                  placeholder="https://..."
+                  required
+                  className="w-full bg-background border border-border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                />
+                <p className="text-[11px] text-muted-foreground mt-1.5 leading-relaxed">
+                  Need a free host? Upload to{' '}
+                  <a href="https://drive.google.com" target="_blank" rel="noopener" className="text-primary underline">Google Drive</a>
+                  {' '}→ Share → "Anyone with link" → use a direct link converter.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">Cover Image URL (optional)</label>
+                <input
+                  type="url"
+                  value={cover}
+                  onChange={e => setCover(e.target.value)}
+                  placeholder="https://..."
+                  className="w-full bg-background border border-border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={isSaving || !title.trim() || !url.trim()}
+                className="w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-xl font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
+              >
+                {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <LinkIcon className="w-4 h-4" />}
+                {isSaving ? 'Saving…' : 'Add Track'}
+              </button>
             </form>
           </div>
 
@@ -135,33 +164,46 @@ export default function MusicManager() {
               <h2 className="font-bold mb-4">
                 Playlist {tracksLoading ? '' : `(${tracks.length})`}
               </h2>
+
               {tracksLoading ? (
                 <div className="flex justify-center py-8">
                   <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
                 </div>
+              ) : tracks.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground">
+                  <Music2 className="w-8 h-8 mx-auto mb-3 opacity-30" />
+                  <p className="text-sm">No tracks yet. Add one with a URL.</p>
+                </div>
               ) : (
                 <div className="space-y-3">
-                  {tracks.map(track => (
-                    <div key={track.id} className="flex items-center gap-3 bg-background border border-border rounded-xl p-3">
-                      <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center overflow-hidden shrink-0">
-                        {track.coverImage ? (
-                          <img src={track.coverImage} alt={track.title} className="w-full h-full object-cover" />
-                        ) : (
-                          <Music2 className="w-4 h-4 text-muted-foreground" />
-                        )}
+                  {tracks.map((track) => (
+                    <div key={track.id} className="flex items-center gap-4 bg-background border border-border rounded-2xl px-4 py-3">
+                      <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 overflow-hidden">
+                        {track.coverImage
+                          ? <img src={track.coverImage} alt={track.title} className="w-full h-full object-cover" />
+                          : <Music2 className="w-4 h-4 text-primary" />
+                        }
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm truncate">{track.title}</p>
+                        <p className="font-medium text-sm text-foreground truncate">{track.title}</p>
+                        <a
+                          href={track.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-primary transition-colors truncate mt-0.5"
+                        >
+                          <ExternalLink className="w-3 h-3 shrink-0" />
+                          <span className="truncate">{track.url}</span>
+                        </a>
                       </div>
-                      <button onClick={() => handleDelete(track.id)}
-                        className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors">
+                      <button
+                        onClick={() => handleDelete(track.id)}
+                        className="shrink-0 w-8 h-8 rounded-xl flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                      >
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
                   ))}
-                  {tracks.length === 0 && (
-                    <p className="text-center text-muted-foreground py-8 text-sm">No tracks yet — upload your first one.</p>
-                  )}
                 </div>
               )}
             </div>
