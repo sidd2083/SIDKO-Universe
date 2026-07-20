@@ -8,8 +8,6 @@ import { withAdminHeaders } from '@/lib/adminAuth';
 import { Loader2, Globe, FileText } from 'lucide-react';
 import { format } from 'date-fns';
 
-const CATEGORY_OPTIONS = ['General', 'Life', 'Tech', 'School', 'Philosophy', 'Nepal', 'Random'];
-
 interface Post { id: string; title: string; slug: string; content: string; excerpt: string; coverImage?: string; readingTime: number; published: boolean; category: string; createdAt: string; }
 
 export default function BlogEditor() {
@@ -91,22 +89,15 @@ export default function BlogEditor() {
           <div className="bg-card border border-border rounded-2xl p-6 shadow-sm flex flex-col h-[80vh]">
             <input type="text" placeholder="Title" value={title} onChange={e => setTitle(e.target.value)}
               className="w-full bg-transparent border-b border-border py-3 text-2xl font-bold focus:outline-none focus:border-primary/50 text-foreground mb-4" />
-            {/* Category picker */}
-            <div className="flex flex-wrap gap-2 pb-3 border-b border-border mb-3">
-              {CATEGORY_OPTIONS.map(cat => (
-                <button
-                  key={cat}
-                  type="button"
-                  onClick={() => setCategory(cat)}
-                  className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${
-                    category === cat
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-muted text-muted-foreground hover:bg-primary/10 hover:text-primary'
-                  }`}
-                >
-                  {cat}
-                </button>
-              ))}
+            {/* Category */}
+            <div className="pb-3 border-b border-border mb-3">
+              <input
+                type="text"
+                value={category}
+                onChange={e => setCategory(e.target.value)}
+                placeholder="Category (e.g. Life, Tech, School…)"
+                className="w-full bg-transparent text-sm text-muted-foreground focus:outline-none focus:text-foreground placeholder:text-muted-foreground/50"
+              />
             </div>
             <textarea placeholder="Write your article here... (Markdown supported)" value={content} onChange={e => setContent(e.target.value)}
               className="flex-1 bg-transparent resize-none focus:outline-none text-foreground leading-relaxed text-sm pt-2" />
