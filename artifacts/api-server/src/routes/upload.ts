@@ -1,15 +1,30 @@
 import { Router } from 'express';
 import multer from 'multer';
 import path from 'path';
+import fs from 'fs';
 import { isValidSessionToken, extractAdminToken } from '../lib/adminSession.js';
-import { getAdminStorage, isFirebaseAdminConfigured } from '../lib/firebaseAdmin.js';
 
-// Bucket name derived from project ID — e.g. sidhub-a359f.firebasestorage.app
-const STORAGE_BUCKET = `${process.env.FIREBASE_PROJECT_ID}.firebasestorage.app`;
+// Resolve uploads dir — same logic as app.ts
+const UPLOADS_DIR =
+  process.env.VERCEL === '1'
+    ? '/tmp/uploads'
+    : path.resolve(process.cwd(), 'uploads');
 
-// Use memory storage — files are held in RAM and pushed to Firebase Storage
+if (!fs.existsSync(UPLOADS_DIR)) {
+  fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+}
+
+// Store files directly on disk — Replit workspace filesystem is persistent
+const storage = multer.diskStorage({
+  destination: (_req, _file, cb) => cb(null, UPLOADS_DIR),
+  filename: (_req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    cb(null, `${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`);
+  },
+});
+
 const upload = multer({
-  storage: multer.memoryStorage(),
+  storage,
   limits: { fileSize: 50 * 1024 * 1024 }, // 50 MB
   fileFilter: (_req, file, cb) => {
     const isImage = file.mimetype.startsWith('image/');
@@ -26,7 +41,7 @@ const upload = multer({
 
 const router = Router();
 
-/** Upload a file — requires valid admin session, stores in Firebase Storage */
+/** Upload a file — requires valid admin session, stored on disk */
 router.post(
   '/upload',
   (req, res, next) => {
@@ -38,39 +53,19 @@ router.post(
     next();
   },
   upload.single('file'),
-  async (req, res): Promise<void> => {
+  (req, res): void => {
     if (!req.file) {
       res.status(400).json({ error: 'No file received' });
       return;
     }
 
-    if (!isFirebaseAdminConfigured) {
-      res.status(503).json({
-        error: 'FIREBASE_SERVICE_ACCOUNT_KEY is not configured — uploads are unavailable.',
-      });
-      return;
-    }
+    // Build absolute URL using the public-facing host.
+    // Replit/Vercel proxies set X-Forwarded-Host; fall back to Host header.
+    // trust proxy: 1 ensures req.protocol already reflects X-Forwarded-Proto.
+    const host = req.get('x-forwarded-host') || req.get('host') || 'localhost:8080';
+    const url = `${req.protocol}://${host}/api/uploads/${req.file.filename}`;
 
-    try {
-      const ext = path.extname(req.file.originalname).toLowerCase();
-      const filename = `uploads/${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`;
-
-      const bucket = getAdminStorage().bucket(STORAGE_BUCKET);
-      const fileRef = bucket.file(filename);
-
-      await fileRef.save(req.file.buffer, {
-        metadata: { contentType: req.file.mimetype },
-      });
-
-      // Firebase Storage download URL — works regardless of bucket IAM settings,
-      // no signed URL expiry, no tokens needed for reading.
-      const encodedFilename = encodeURIComponent(filename);
-      const url = `https://firebasestorage.googleapis.com/v0/b/${STORAGE_BUCKET}/o/${encodedFilename}?alt=media`;
-      res.json({ url });
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      res.status(500).json({ error: `Upload failed: ${message}` });
-    }
+    res.json({ url });
   },
 );
 

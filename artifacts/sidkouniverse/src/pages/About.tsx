@@ -3,176 +3,177 @@ import { PageWrapper } from '@/components/layout/PageWrapper';
 import { motion } from 'framer-motion';
 import {
   Code2, Globe, Camera, Brain, Database,
-  MapPin, Coffee, Rocket, GraduationCap, Layers,
-  Dumbbell, Music, Flame, BookOpen, Cpu,
+  MapPin, Rocket, GraduationCap, Layers,
+  Dumbbell, Music, Flame, BookOpen, Cpu, ArrowUpRight,
 } from 'lucide-react';
 import { Link } from 'wouter';
 
+const fade = (delay = 0) => ({
+  initial: { opacity: 0, y: 18 },
+  animate: { opacity: 1, y: 0 },
+  transition: { delay, duration: 0.45, ease: 'easeOut' as const },
+});
+
 const skills = [
-  { icon: Code2,    label: 'Full-Stack Web Dev',   desc: 'React, Node.js, TypeScript, REST APIs, Express' },
-  { icon: Brain,    label: 'AI / Machine Learning', desc: 'Python, NumPy, Pandas. Deep in the rabbit hole.' },
-  { icon: Layers,   label: 'UI & Design Systems',   desc: 'Tailwind CSS, Framer Motion, component design' },
-  { icon: Database, label: 'Databases & APIs',       desc: 'PostgreSQL, Drizzle ORM, REST API design' },
-  { icon: Globe,    label: 'WordPress',              desc: 'Custom themes, plugins, site architecture' },
-  { icon: Camera,   label: 'Photo Editing',          desc: 'Lightroom, composition, retouching' },
+  { icon: Code2,    label: 'Full-Stack',       sub: 'React · Node.js · TypeScript · REST',    color: 'text-blue-400 bg-blue-400/10' },
+  { icon: Brain,    label: 'AI / ML',           sub: 'Python · NumPy · Pandas. Still learning.', color: 'text-violet-400 bg-violet-400/10' },
+  { icon: Layers,   label: 'UI & Design',       sub: 'Tailwind · Framer Motion · Figma',       color: 'text-pink-400 bg-pink-400/10' },
+  { icon: Database, label: 'Databases',          sub: 'PostgreSQL · Firestore · Drizzle ORM',  color: 'text-green-400 bg-green-400/10' },
+  { icon: Globe,    label: 'WordPress',          sub: 'Custom themes, plugins, architecture',  color: 'text-orange-400 bg-orange-400/10' },
+  { icon: Camera,   label: 'Photo Editing',      sub: 'Lightroom · composition · retouching',  color: 'text-cyan-400 bg-cyan-400/10' },
 ];
 
-const fade = (delay = 0) => ({
-  initial: { opacity: 0, y: 14 },
-  animate: { opacity: 1, y: 0 },
-  transition: { delay, duration: 0.4 },
-});
+const timeline = [
+  { time: '6 AM',       emoji: '🏋️', label: 'Gym',                note: 'Non-negotiable. If I miss this the whole day feels off.' },
+  { time: '8 AM',       emoji: '📚', label: 'College',             note: 'Hetauda School of Management. Science stream.' },
+  { time: '1 PM',       emoji: '🍱', label: 'Back home, eat',      note: 'Usually rice. We\'re Nepali.' },
+  { time: '2–5 PM',     emoji: '💻', label: 'Deep work block',     note: 'Building, reading, writing code. No social media.' },
+  { time: '5–7 PM',     emoji: '🧠', label: 'Learning',            note: 'AI/ML concepts, math, random Wikipedia spirals.' },
+  { time: '7 PM',       emoji: '🍽️', label: 'Dinner + family',     note: 'Actual human interaction.' },
+  { time: '8–11 PM',    emoji: '🎵', label: 'Music + wind down',   note: 'Sometimes journaling. Mostly overthinking.' },
+];
 
 export default function About() {
   return (
     <PageWrapper>
-      <div className="max-w-3xl mx-auto py-8 space-y-14">
+      <div className="max-w-2xl mx-auto py-8 space-y-16">
 
         {/* ── Hero ── */}
         <motion.div {...fade(0)}>
-          <p className="text-xs font-bold uppercase tracking-widest text-primary mb-3">About Me</p>
-          <h1 className="text-4xl md:text-5xl font-black tracking-tight mb-5 leading-tight">
-            I'm Siddhant.<br />
-            <span className="text-muted-foreground font-semibold text-3xl md:text-4xl">
-              I build things and figure out the rest as I go.
-            </span>
+          <p className="text-xs font-bold uppercase tracking-widest text-primary mb-4">About</p>
+          <h1 className="text-[2.6rem] md:text-6xl font-black tracking-tight leading-[1.08] mb-6">
+            I'm Siddhant.
           </h1>
-          <p className="text-lg text-muted-foreground leading-relaxed max-w-2xl">
-            Grade 11 student from Hetauda, Nepal. I spend most of my time writing code,
-            thinking about ideas, and trying to become someone worth becoming. This site
-            is my living proof that I existed and actually tried.
+          <p className="text-xl text-muted-foreground leading-relaxed mb-4">
+            Grade 11. Hetauda, Nepal. I build things on the internet and try to figure out
+            who I'm becoming while doing it.
+          </p>
+          <p className="text-base text-muted-foreground/80 leading-relaxed">
+            This site is the real version of me — not the one curated for Instagram or a resume.
+            It has my memories, my half-baked thoughts, music I'm obsessed with, and projects I'm
+            actually working on. You're welcome to stay.
           </p>
         </motion.div>
 
-        {/* ── Right now ── */}
-        <motion.section {...fade(0.05)}>
-          <h2 className="text-xl font-bold mb-4">Right now</h2>
-          <div className="grid sm:grid-cols-2 gap-3">
-            {[
-              { icon: Rocket,       text: 'Building StudentHub Nepal',         sub: 'My biggest project yet' },
-              { icon: Brain,        text: 'Going deep on AI & ML',              sub: 'Papers, code, experiments' },
-              { icon: GraduationCap,text: 'Surviving Grade 11',                sub: 'HSM, Hetauda' },
-              { icon: Dumbbell,     text: 'Hitting the gym daily',             sub: 'Consistency > motivation' },
-              { icon: Music,        text: 'Always listening to music',         sub: 'Literally always' },
-              { icon: Cpu,          text: 'Learning to build AI products',     sub: 'Not just use them' },
-            ].map(({ icon: Icon, text, sub }) => (
-              <div key={text} className="flex items-start gap-3 bg-card border border-border rounded-2xl p-4 hover:shadow-sm transition-shadow">
-                <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
-                  <Icon className="w-4 h-4 text-primary" />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-foreground">{text}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">{sub}</p>
-                </div>
-              </div>
-            ))}
+        {/* ── The honest bit ── */}
+        <motion.section {...fade(0.06)}>
+          <div className="border-l-2 border-primary/40 pl-6 space-y-4 text-muted-foreground leading-relaxed">
+            <p className="text-base">
+              I get overwhelmed easily. I want to learn AI, math, physics, design, business — all of it,
+              all at once. Most days I end up doing none of it properly. I start things and don't finish them.
+              I have a folder called "ideas" with 200 notes in it. I've shipped maybe 5.
+            </p>
+            <p className="text-base">
+              But I keep showing up. I built this site because I needed something that was
+              <em className="text-foreground not-italic font-semibold"> mine</em>. No algorithm.
+              No performance. Just me, documenting what's actually happening.
+            </p>
+            <p className="text-base">
+              If you're 17 somewhere with a bunch of ideas and not enough time — this is proof you
+              can build something real anyway. It won't be perfect. Ship it.
+            </p>
           </div>
         </motion.section>
 
-        {/* ── The honest version ── */}
+        {/* ── Right now ── */}
         <motion.section {...fade(0.1)}>
-          <h2 className="text-xl font-bold mb-4">The honest version</h2>
-          <div className="bg-card border border-border rounded-2xl p-6 space-y-4 text-muted-foreground leading-relaxed text-sm">
-            <p>
-              I'm not the type who has everything figured out. I get overwhelmed. I procrastinate.
-              I start things and don't finish them. I want to learn everything: AI, math, physics,
-              business, design. And end up doing none of it properly some days.
-            </p>
-            <p>
-              But I keep showing up. I built this site not to show off, but because I needed a place
-              that was <em className="text-foreground font-medium">mine</em>. No algorithm, no likes
-              count, no performance. Just me, writing and building in public, figuring out who I'm
-              becoming.
-            </p>
-            <p>
-              If you're a 17-year-old somewhere trying to build something real with limited resources
-              and too many ideas. This site is proof that you can start anyway.
-            </p>
+          <h2 className="text-sm font-bold uppercase tracking-widest text-muted-foreground mb-5">Right now</h2>
+          <div className="space-y-2">
+            {[
+              { icon: Rocket,        text: 'Building StudentHub Nepal',     sub: 'The project I think about at 2am' },
+              { icon: Brain,         text: 'Going deep on AI & ML',          sub: 'Papers, code, a lot of confusion' },
+              { icon: GraduationCap, text: 'Surviving Grade 11, Science',    sub: 'Hetauda School of Management' },
+              { icon: Dumbbell,      text: 'Gym every morning',              sub: 'The one habit that stuck' },
+              { icon: Cpu,           text: 'Learning to build AI products',  sub: 'Not just use them — build them' },
+              { icon: Music,         text: 'Always listening to music',      sub: 'Literally always. Check the player.' },
+            ].map(({ icon: Icon, text, sub }) => (
+              <div key={text} className="flex items-center gap-4 py-3 border-b border-border/50 last:border-0">
+                <Icon className="w-4 h-4 text-muted-foreground shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <span className="text-sm font-medium text-foreground">{text}</span>
+                  <span className="text-xs text-muted-foreground ml-2">— {sub}</span>
+                </div>
+              </div>
+            ))}
           </div>
         </motion.section>
 
         {/* ── What I'm building ── */}
         <motion.section {...fade(0.12)}>
-          <h2 className="text-xl font-bold mb-4">What I'm Building</h2>
-          <Link href="https://studenthubnp.com" target="_blank" rel="noopener noreferrer">
+          <h2 className="text-sm font-bold uppercase tracking-widest text-muted-foreground mb-5">What I'm building</h2>
+          <a href="https://studenthubnp.com" target="_blank" rel="noopener noreferrer">
             <motion.div
-              whileHover={{ y: -2 }}
-              className="bg-card border border-border rounded-2xl p-6 cursor-pointer hover:shadow-md transition-all group"
+              whileHover={{ y: -3 }}
+              className="group relative bg-card border border-border rounded-2xl p-6 cursor-pointer hover:border-primary/40 transition-all hover:shadow-lg hover:shadow-primary/5"
             >
-              <div className="flex items-start gap-4">
-                <div className="w-14 h-14 rounded-2xl bg-muted border border-border flex items-center justify-center text-2xl shrink-0">
-                  🎓
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1.5">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <span className="text-3xl">🎓</span>
+                  <div>
                     <p className="font-bold text-foreground text-base group-hover:text-primary transition-colors">
                       StudentHub Nepal
                     </p>
-                    <span className="text-[10px] font-bold bg-green-500/10 text-green-600 dark:text-green-400 px-2 py-0.5 rounded-md">
-                      ● LIVE
+                    <span className="text-[10px] font-bold text-green-500 flex items-center gap-1 mt-0.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                      Live
                     </span>
                   </div>
-                  <p className="text-sm text-muted-foreground leading-relaxed mb-3">
-                    A platform for students across Nepal: resources, notes, and peer collaboration.
-                    I built the tool I wished existed when I started my +2 journey. It's not perfect.
-                    It's alive. And it's growing.
-                  </p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {['React', 'Node.js', 'TypeScript', 'PostgreSQL', 'AI/ML'].map(t => (
-                      <span key={t} className="text-[11px] font-medium bg-muted text-muted-foreground px-2 py-0.5 rounded-md border border-border">
-                        {t}
-                      </span>
-                    ))}
-                  </div>
                 </div>
+                <ArrowUpRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+              </div>
+              <p className="text-sm text-muted-foreground leading-relaxed mb-4">
+                Resources, notes, and peer collaboration for students across Nepal.
+                I built the tool I wished existed when I started my +2 journey.
+                It's not perfect. It's growing.
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {['React', 'Node.js', 'TypeScript', 'PostgreSQL', 'AI/ML'].map(t => (
+                  <span key={t} className="text-[11px] font-medium bg-muted text-muted-foreground px-2.5 py-1 rounded-lg border border-border">
+                    {t}
+                  </span>
+                ))}
               </div>
             </motion.div>
-          </Link>
-          <p className="text-sm text-muted-foreground mt-3 px-1">
-            More projects coming. I build in phases. StudentHub is the big one right now.
-          </p>
+          </a>
+          <p className="text-xs text-muted-foreground mt-3 px-1">More in progress. I build in phases.</p>
         </motion.section>
 
         {/* ── Skills ── */}
         <motion.section {...fade(0.15)}>
-          <h2 className="text-xl font-bold mb-2">Skills</h2>
-          <p className="text-sm text-muted-foreground mb-5">Things I can actually build with. Not buzzwords.</p>
+          <h2 className="text-sm font-bold uppercase tracking-widest text-muted-foreground mb-5">Things I can actually build with</h2>
           <div className="grid sm:grid-cols-2 gap-3">
             {skills.map((skill) => (
-              <motion.div
-                key={skill.label}
-                whileHover={{ y: -2 }}
-                className="bg-card border border-border rounded-2xl p-4 flex items-start gap-3 hover:shadow-sm transition-shadow"
-              >
-                <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                  <skill.icon className="w-4 h-4 text-primary" />
+              <div key={skill.label} className="flex items-center gap-3 bg-card border border-border rounded-xl p-4">
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${skill.color}`}>
+                  <skill.icon className="w-4 h-4" />
                 </div>
-                <div>
-                  <p className="font-semibold text-foreground text-sm">{skill.label}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{skill.desc}</p>
+                <div className="min-w-0">
+                  <p className="font-semibold text-foreground text-sm leading-none mb-1">{skill.label}</p>
+                  <p className="text-xs text-muted-foreground leading-snug">{skill.sub}</p>
                 </div>
-              </motion.div>
+              </div>
             ))}
           </div>
         </motion.section>
 
-        {/* ── A day in my life ── */}
+        {/* ── Day ── */}
         <motion.section {...fade(0.18)}>
-          <h2 className="text-xl font-bold mb-4">A day in my life</h2>
-          <div className="bg-card border border-border rounded-2xl p-5">
-            <div className="space-y-3">
-              {[
-                { time: 'Early morning', label: '🏋️‍♂️ Gym', note: 'Non-negotiable. Sets the tone.' },
-                { time: 'Morning',       label: '📚 College', note: 'Hetauda School of Management' },
-                { time: 'Afternoon',     label: '🧠 Deep work', note: 'Reading, building, thinking' },
-                { time: 'Evening',       label: '💻 Project time', note: 'Mostly StudentHub + experiments' },
-                { time: 'Night',         label: '🎵 Music + wind down', note: 'Some journaling, some overthinking' },
-              ].map(({ time, label, note }) => (
-                <div key={time} className="flex items-center gap-4">
-                  <span className="text-[10px] font-semibold text-muted-foreground w-20 shrink-0 uppercase tracking-wide">{time}</span>
-                  <div className="flex-1 flex items-center gap-3 bg-background border border-border px-4 py-2.5 rounded-xl">
-                    <span className="text-sm font-medium text-foreground">{label}</span>
-                    <span className="text-xs text-muted-foreground">— {note}</span>
+          <h2 className="text-sm font-bold uppercase tracking-widest text-muted-foreground mb-5">A typical day</h2>
+          <div className="relative">
+            {/* vertical line */}
+            <div className="absolute left-[22px] top-2 bottom-2 w-px bg-border" />
+            <div className="space-y-1">
+              {timeline.map(({ time, emoji, label, note }) => (
+                <div key={time} className="flex items-start gap-4 pl-1">
+                  <div className="w-11 h-11 rounded-full bg-card border border-border flex items-center justify-center text-lg shrink-0 relative z-10">
+                    {emoji}
+                  </div>
+                  <div className="flex-1 pb-5 pt-1.5">
+                    <div className="flex items-baseline gap-2 flex-wrap">
+                      <span className="font-semibold text-sm text-foreground">{label}</span>
+                      <span className="text-[10px] font-mono text-muted-foreground/60 uppercase">{time}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{note}</p>
                   </div>
                 </div>
               ))}
@@ -182,44 +183,36 @@ export default function About() {
 
         {/* ── Quick facts ── */}
         <motion.section {...fade(0.2)}>
-          <h2 className="text-xl font-bold mb-4">Quick facts</h2>
-          <div className="grid sm:grid-cols-2 gap-3">
+          <h2 className="text-sm font-bold uppercase tracking-widest text-muted-foreground mb-5">Quick facts</h2>
+          <div className="grid sm:grid-cols-2 gap-2">
             {[
               { icon: MapPin,        text: 'Hetauda, Bagmati Province, Nepal' },
-              { icon: Code2,         text: 'Stack: React · Node.js · TypeScript' },
-              { icon: Flame,         text: 'Obsessed with AI and what it will become' },
-              { icon: Coffee,        text: 'Tea > Coffee (fight me)' },
-              { icon: BookOpen,      text: 'Learning: ML math, system design, writing' },
-              { icon: GraduationCap, text: 'Grade 11 · Science stream · HSM Hetauda' },
+              { icon: Code2,         text: 'React · Node.js · TypeScript' },
+              { icon: Flame,         text: 'Obsessed with where AI is going' },
+              { icon: BookOpen,      text: 'Currently: ML math + system design' },
+              { icon: GraduationCap, text: 'Grade 11 · Science · HSM Hetauda' },
+              { icon: Music,         text: 'Tea over coffee. Not negotiable.' },
             ].map(({ icon: Icon, text }) => (
-              <div key={text} className="flex items-center gap-3 bg-card border border-border px-4 py-3 rounded-xl text-sm text-foreground">
-                <Icon className="w-4 h-4 text-primary shrink-0" />
-                <span>{text}</span>
+              <div key={text} className="flex items-center gap-3 bg-card/50 border border-border/60 px-4 py-3 rounded-xl text-sm text-foreground">
+                <Icon className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                <span className="text-sm text-muted-foreground">{text}</span>
               </div>
             ))}
           </div>
         </motion.section>
 
-        {/* ── Why this site ── */}
-        <motion.section {...fade(0.22)}>
-          <h2 className="text-xl font-bold mb-4">Why this site exists</h2>
-          <div className="bg-card border border-border rounded-2xl p-6 text-muted-foreground text-sm leading-relaxed space-y-3">
-            <p>
-              Social media wanted me to perform. This site lets me <em className="text-foreground font-medium">exist</em>.
-              No algorithm decides what you see. No like count tells me if something was worth writing.
-              Just me, documenting my life as it actually happens: the good builds, the failed experiments,
-              the random 2am thoughts, the memories I don't want to forget.
-            </p>
-            <p>
-              Think of it as stepping into my room. You're welcome to look around.
-            </p>
-          </div>
-          <div className="flex gap-3 mt-4">
-            <Link href="/blog" className="text-sm font-medium bg-primary text-primary-foreground px-5 py-2.5 rounded-xl hover:opacity-90 transition-opacity">
-              Read My Philosophy
+        {/* ── CTA ── */}
+        <motion.section {...fade(0.22)} className="pb-4">
+          <div className="flex gap-3 flex-wrap">
+            <Link href="/blog">
+              <span className="text-sm font-semibold bg-primary text-primary-foreground px-5 py-2.5 rounded-xl hover:opacity-90 transition-opacity cursor-pointer inline-block">
+                Read my writing
+              </span>
             </Link>
-            <Link href="/guestbook" className="text-sm font-medium bg-card border border-border text-foreground px-5 py-2.5 rounded-xl hover:bg-muted transition-colors">
-              Leave a Note
+            <Link href="/guestbook">
+              <span className="text-sm font-medium bg-card border border-border text-muted-foreground px-5 py-2.5 rounded-xl hover:text-foreground hover:bg-muted transition-colors cursor-pointer inline-block">
+                Leave a note
+              </span>
             </Link>
           </div>
         </motion.section>

@@ -1,31 +1,23 @@
 import React, { useState } from 'react';
 import { PageWrapper } from '@/components/layout/PageWrapper';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { Brain, Code2, ChevronDown, AlertTriangle, Scroll } from 'lucide-react';
+import { Brain, Code2, ChevronRight, BookMarked, Scroll, CheckCircle2, Circle } from 'lucide-react';
 
 interface Topic {
   name: string;
+  status: 'done' | 'learning' | 'next';
   desc: string;
   why: string;
   resources?: string[];
-}
-
-interface Philosopher {
-  name: string;
-  years: string;
-  emoji: string;
-  school: string;
-  coreIdea: string;
-  quote: string;
-  quoteContext: string;
-  howIThinkAboutIt: string;
 }
 
 interface Section {
   id: string;
   icon: React.ElementType;
   color: string;
+  bg: string;
+  label: string;
   title: string;
   subtitle: string;
   topics: Topic[];
@@ -36,44 +28,45 @@ const sections: Section[] = [
     id: 'math',
     icon: Brain,
     color: 'text-violet-400',
+    bg: 'bg-violet-400/10',
+    label: 'Math',
     title: 'Math for AI/ML',
-    subtitle: 'The foundation every AI engineer needs',
+    subtitle: 'The part that actually makes you dangerous',
     topics: [
       {
         name: 'Linear Algebra',
-        desc: 'Vectors, matrices, matrix multiplication, eigenvalues, eigenvectors, dot products.',
-        why: 'Neural networks are just giant matrix operations. Every layer = a matrix multiply.',
-        resources: ['3Blue1Brown — Essence of Linear Algebra', 'MIT 18.06 (Gilbert Strang)'],
+        status: 'learning',
+        desc: 'Vectors, matrices, matrix multiplication, eigenvalues, dot products.',
+        why: 'Neural networks are giant matrix operations. Every layer is a matrix multiply. You can\'t understand what\'s happening under the hood without this.',
+        resources: ['3Blue1Brown — Essence of Linear Algebra (YouTube)', 'MIT 18.06 with Gilbert Strang'],
       },
       {
         name: 'Calculus & Derivatives',
-        desc: 'Derivatives, partial derivatives, chain rule, gradients, integrals.',
-        why: 'Backpropagation is just chain rule applied recursively. Gradients tell the model how to improve.',
-        resources: ['3Blue1Brown — Essence of Calculus', 'Khan Academy Calculus'],
+        status: 'learning',
+        desc: 'Derivatives, partial derivatives, chain rule, gradients.',
+        why: 'Backpropagation is literally just the chain rule applied recursively. Every time a model "learns" something, calculus is happening.',
+        resources: ['3Blue1Brown — Essence of Calculus', 'Khan Academy (free, genuinely good)'],
       },
       {
         name: 'Probability & Statistics',
-        desc: 'Probability distributions, Bayes theorem, expectation, variance, normal distribution.',
-        why: 'Every ML model is making probabilistic predictions. Understanding uncertainty is key.',
-        resources: ['StatQuest with Josh Starmer', 'Think Stats (free book)'],
+        status: 'next',
+        desc: 'Distributions, Bayes theorem, expectation, variance, normal distribution.',
+        why: 'Every ML output is a probability. If you don\'t understand uncertainty, you don\'t understand the model.',
+        resources: ['StatQuest with Josh Starmer (YouTube)', 'Think Stats — free online book'],
       },
       {
         name: 'Multivariable Calculus',
-        desc: 'Gradient descent, Jacobians, Hessians, optimization in high-dimensional spaces.',
-        why: 'Training a neural network = optimizing a function with millions of variables.',
+        status: 'next',
+        desc: 'Gradient descent, Jacobians, optimization in high-dimensional spaces.',
+        why: 'Training a neural net = optimizing a function with millions of variables. This is how.',
         resources: ['MIT 18.02', '3Blue1Brown Neural Networks series'],
       },
       {
         name: 'Information Theory',
+        status: 'next',
         desc: 'Entropy, cross-entropy, KL divergence, mutual information.',
-        why: 'Loss functions like cross-entropy come directly from information theory.',
-        resources: ['Towards Data Science articles', 'Elements of Information Theory'],
-      },
-      {
-        name: 'Optimization',
-        desc: 'Gradient descent, SGD, Adam, momentum, learning rate schedules.',
-        why: 'This is literally how models learn. Understanding optimizers helps you train faster.',
-        resources: ['fast.ai — Practical Deep Learning', 'CS231n Stanford'],
+        why: 'Loss functions like cross-entropy come directly from information theory. Makes way more sense once you know the origin.',
+        resources: ['Towards Data Science (articles)', 'Elements of Information Theory'],
       },
     ],
   },
@@ -81,222 +74,208 @@ const sections: Section[] = [
     id: 'python',
     icon: Code2,
     color: 'text-blue-400',
-    title: 'Python & AI Libraries',
-    subtitle: 'The toolkit every ML engineer uses daily',
+    bg: 'bg-blue-400/10',
+    label: 'Python',
+    title: 'Python & ML Libraries',
+    subtitle: 'The actual toolkit',
     topics: [
       {
         name: 'NumPy',
-        desc: 'N-dimensional arrays, vectorized math operations, broadcasting, slicing.',
-        why: 'The foundation of all numerical computing in Python. Everything else builds on NumPy arrays.',
+        status: 'done',
+        desc: 'N-dimensional arrays, vectorized ops, broadcasting, slicing.',
+        why: 'Foundation of all numerical computing in Python. Everything else builds on this.',
         resources: ['NumPy official docs', 'NumPy 100 exercises (GitHub)'],
       },
       {
         name: 'Pandas',
-        desc: 'DataFrames, data cleaning, groupby, merging, handling missing values.',
-        why: 'Real-world data is messy. Pandas is how you clean, explore, and prepare it.',
+        status: 'done',
+        desc: 'DataFrames, data cleaning, groupby, merging, handling messy data.',
+        why: 'Real data is disgusting. Pandas is how you make it usable.',
         resources: ['Pandas documentation', 'Kaggle Pandas course (free)'],
       },
       {
         name: 'Matplotlib & Seaborn',
-        desc: 'Line plots, scatter plots, histograms, heatmaps, subplots.',
-        why: "You can't improve what you can't see. Visualizing data reveals patterns instantly.",
+        status: 'learning',
+        desc: 'Line plots, scatter plots, histograms, heatmaps.',
+        why: 'You can\'t improve what you can\'t see. Plotting reveals patterns in 5 seconds that tables take 20 minutes to find.',
         resources: ['Matplotlib gallery', 'Seaborn tutorial'],
       },
       {
         name: 'Scikit-learn',
-        desc: 'Linear regression, decision trees, SVM, k-means, train/test split, metrics.',
-        why: 'Best library for classical ML. Consistent API — learn once, apply everywhere.',
+        status: 'learning',
+        desc: 'Linear regression, decision trees, SVM, k-means, metrics.',
+        why: 'Best library for classical ML. Consistent API — learn it once, it works everywhere.',
         resources: ['Scikit-learn user guide', 'Hands-On Machine Learning (book)'],
       },
       {
-        name: 'TensorFlow / Keras',
-        desc: 'Building neural networks, layers, activation functions, model training.',
-        why: "Google's deep learning framework. Keras makes building NNs feel like Lego blocks.",
-        resources: ['TensorFlow tutorials', 'Deep Learning with Python (Chollet)'],
-      },
-      {
         name: 'PyTorch',
-        desc: 'Tensors, autograd, custom layers, training loops, GPU acceleration.',
-        why: 'Preferred in research. More flexible than Keras — great for understanding internals.',
-        resources: ['PyTorch 60-minute blitz', 'fast.ai course (uses PyTorch)'],
+        status: 'next',
+        desc: 'Tensors, autograd, custom layers, training loops, GPU.',
+        why: 'Preferred in research. More flexible than Keras. Great for actually understanding what\'s happening.',
+        resources: ['PyTorch 60-minute blitz', 'fast.ai (uses PyTorch throughout)'],
       },
       {
-        name: 'Hugging Face Transformers',
-        desc: 'Pre-trained LLMs, BERT, GPT, fine-tuning, tokenizers, pipelines.',
-        why: 'The go-to library for NLP. Access to thousands of pre-trained models in 3 lines.',
+        name: 'Hugging Face',
+        status: 'next',
+        desc: 'Pre-trained LLMs, BERT, GPT, fine-tuning, pipelines.',
+        why: 'The go-to for NLP. Thousands of pre-trained models. Honestly wild how easy it is now.',
         resources: ['HuggingFace course (free)', 'HuggingFace docs'],
       },
     ],
   },
 ];
 
-const philosophers: Philosopher[] = [
+const statusConfig = {
+  done:     { icon: CheckCircle2, label: 'Done',     color: 'text-green-500', bg: 'bg-green-500/10 text-green-600 dark:text-green-400' },
+  learning: { icon: Circle,       label: 'In progress', color: 'text-blue-400', bg: 'bg-blue-500/10 text-blue-600 dark:text-blue-400' },
+  next:     { icon: Circle,       label: 'Up next',  color: 'text-muted-foreground', bg: 'bg-muted text-muted-foreground' },
+};
+
+const philosophers = [
   {
     name: 'Socrates',
     years: '470–399 BC',
     emoji: '🏛️',
-    school: 'Classical Greek · Socratic Method',
-    coreIdea:
-      'True wisdom begins with knowing you know nothing. Question everything — especially your own beliefs. The unexamined life is not worth living.',
+    tag: 'Know nothing, question everything',
+    take: 'I catch myself pretending to understand things I don\'t. Socrates would have destroyed me in a conversation — and that\'s exactly why I respect him. His whole method was just: ask "why?" until the person realizes they were repeating what they heard, not what they actually know. The most dangerous thing you can do intellectually is to stop questioning.',
     quote: 'The only true wisdom is in knowing you know nothing.',
-    quoteContext:
-      'From Plato\'s Apology — Socrates explaining why he is considered wise despite claiming ignorance.',
-    howIThinkAboutIt:
-      'This hits me. I catch myself pretending to understand things I don\'t. Socrates would have destroyed me in a conversation — and that\'s exactly why I respect him. His method was simple: ask "why?" until the person realizes they were just repeating what they heard, not what they actually know.',
   },
   {
     name: 'Plato',
     years: '428–348 BC',
     emoji: '💡',
-    school: 'Classical Greek · Idealism',
-    coreIdea:
-      'The world we see is just a shadow of a higher reality made of perfect, eternal "Forms." What we call a chair is just an imperfect copy of the ideal Form of Chair. Knowledge is remembering truths the soul already knows.',
-    quote:
-      'We can easily forgive a child who is afraid of the dark; the real tragedy of life is when men are afraid of the light.',
-    quoteContext:
-      'On the courage it takes to seek truth and leave comfortable ignorance behind.',
-    howIThinkAboutIt:
-      'The Allegory of the Cave is one of the most powerful things I\'ve ever read. Prisoners chained in a cave, mistaking shadows for reality — and when one escapes into the sunlight, he can\'t convince the others that what they see is fake. That\'s literally social media. That\'s echo chambers. That\'s people refusing to update their beliefs. Plato wrote this in 380 BC.',
+    tag: 'The shadows on the wall aren\'t real',
+    take: 'The Allegory of the Cave hit me differently. Prisoners chained in a cave, thinking shadows are reality — and when one escapes into sunlight, he can\'t convince the others. That\'s social media. That\'s echo chambers. That\'s anyone who\'s already decided what they believe and filters everything else out. Plato wrote this in 380 BC.',
+    quote: 'The real tragedy is when men are afraid of the light.',
   },
   {
     name: 'Aristotle',
     years: '384–322 BC',
     emoji: '⚖️',
-    school: 'Classical Greek · Virtue Ethics',
-    coreIdea:
-      'Happiness (eudaimonia) is not a feeling — it\'s an activity. You become good by doing good, repeatedly, until it becomes habit. Virtue is the mean between two extremes: courage sits between cowardice and recklessness.',
-    quote: 'We are what we repeatedly do. Excellence, then, is not an act, but a habit.',
-    quoteContext:
-      'From Nicomachean Ethics — on how character is built through consistent action, not intention.',
-    howIThinkAboutIt:
-      'This is the one I come back to most. Not "think good thoughts" — actually do the thing, consistently, until it\'s who you are. Every time I skip a habit I told myself I\'d build, Aristotle is somewhere disappointed. His point is that identity is downstream of behavior. You don\'t decide to be disciplined — you just keep showing up until discipline is what you are.',
+    tag: 'You are what you repeatedly do',
+    take: 'This is the one I come back to most. Not "think good thoughts" — actually do the thing, every day, until it\'s who you are. Every time I skip a habit I said I\'d build, Aristotle is somewhere disappointed. Identity is downstream of behavior. You don\'t decide to be disciplined. You just keep showing up until discipline is what you are.',
+    quote: 'Excellence is not an act, but a habit.',
   },
   {
-    name: 'Friedrich Nietzsche',
+    name: 'Nietzsche',
     years: '1844–1900',
     emoji: '⚡',
-    school: 'Existentialism · Will to Power',
-    coreIdea:
-      'God is dead — meaning the old moral systems that gave life structure are collapsing. Now each person must create their own values. The Übermensch (Overman) doesn\'t follow inherited rules; he creates meaning from within. Embrace suffering — it\'s what makes you stronger.',
+    tag: 'Stop outsourcing your values',
+    take: 'The most misunderstood philosopher alive. He wasn\'t nihilistic — he was saying the old maps are gone, so stop waiting for someone to hand you a purpose and build your own. What I take from him: figure out what actually matters to you and commit completely. Don\'t live by rules you inherited from people who weren\'t thinking about your life.',
     quote: 'That which does not kill us makes us stronger.',
-    quoteContext:
-      'From Twilight of the Idols — on using hardship as fuel rather than an excuse.',
-    howIThinkAboutIt:
-      'Nietzsche is the philosopher people misunderstand the most. He wasn\'t nihilistic — he was the opposite. He was saying: the old maps are gone, so stop waiting for someone to hand you a purpose. Build one. What I take from him: stop outsourcing your values to what\'s "normal" or "expected." Figure out what actually matters to you and commit to it completely. Also, his writing style hits differently — aggressive, poetic, personal.',
+  },
+  {
+    name: 'Camus',
+    years: '1913–1960',
+    emoji: '🌊',
+    tag: 'Life is absurd. Do it anyway.',
+    take: 'Sisyphus pushes a rock up a hill forever. It rolls back every time. Camus says we must imagine Sisyphus happy. I used to think that was bleak. Now I think it\'s the most honest thing anyone\'s ever said about motivation. The point isn\'t the destination. The doing is the point. There\'s something freeing in that once you actually accept it.',
+    quote: 'One must imagine Sisyphus happy.',
   },
 ];
 
-function TopicCard({ topic }: { topic: Topic }) {
+function TopicRow({ topic }: { topic: Topic }) {
   const [open, setOpen] = useState(false);
+  const st = statusConfig[topic.status];
 
   return (
-    <motion.div layout className="bg-card border border-border rounded-2xl overflow-hidden">
+    <div className={cn('border-b border-border/40 last:border-0 transition-colors', open && 'bg-card/40')}>
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between p-4 text-left gap-3"
+        className="w-full flex items-center gap-4 px-4 py-4 text-left"
       >
-        <div className="flex-1">
-          <p className="font-semibold text-foreground text-sm">{topic.name}</p>
-          <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{topic.desc}</p>
+        <st.icon className={cn('w-4 h-4 shrink-0', st.color, topic.status === 'done' && 'fill-green-500/20')} />
+        <div className="flex-1 min-w-0">
+          <span className="text-sm font-semibold text-foreground">{topic.name}</span>
         </div>
-        <motion.div
-          animate={{ rotate: open ? 180 : 0 }}
-          transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-          className="shrink-0"
-        >
-          <ChevronDown className="w-4 h-4 text-muted-foreground" />
+        <span className={cn('text-[10px] font-bold px-2 py-0.5 rounded-md shrink-0', st.bg)}>
+          {st.label}
+        </span>
+        <motion.div animate={{ rotate: open ? 90 : 0 }} transition={{ duration: 0.2 }}>
+          <ChevronRight className="w-4 h-4 text-muted-foreground" />
         </motion.div>
       </button>
 
-      <motion.div
-        initial={false}
-        animate={{ height: open ? 'auto' : 0, opacity: open ? 1 : 0 }}
-        transition={{ duration: 0.25, ease: 'easeInOut' }}
-        className="overflow-hidden"
-      >
-        <div className="px-4 pb-4 pt-0 space-y-3 border-t border-border/50">
-          <p className="text-sm text-muted-foreground leading-relaxed pt-3">{topic.desc}</p>
-          <div className="bg-primary/5 border border-primary/20 rounded-xl px-4 py-3">
-            <p className="text-xs font-semibold text-primary mb-1">Why it matters</p>
-            <p className="text-xs text-muted-foreground leading-relaxed">{topic.why}</p>
-          </div>
-          {topic.resources && topic.resources.length > 0 && (
-            <div>
-              <p className="text-xs font-semibold text-foreground mb-2">📚 Learn from</p>
-              <ul className="space-y-1">
-                {topic.resources.map((r) => (
-                  <li key={r} className="text-xs text-muted-foreground flex items-center gap-1.5">
-                    <span className="w-1 h-1 rounded-full bg-primary/60 shrink-0" />
-                    {r}
-                  </li>
-                ))}
-              </ul>
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.22, ease: 'easeInOut' }}
+            className="overflow-hidden"
+          >
+            <div className="px-12 pb-5 space-y-3">
+              <p className="text-sm text-muted-foreground leading-relaxed">{topic.desc}</p>
+              <div className="rounded-xl bg-primary/5 border border-primary/15 px-4 py-3">
+                <p className="text-xs font-semibold text-primary mb-1">Why it matters to me</p>
+                <p className="text-xs text-muted-foreground leading-relaxed">{topic.why}</p>
+              </div>
+              {topic.resources && (
+                <div className="flex flex-wrap gap-2">
+                  {topic.resources.map(r => (
+                    <span key={r} className="text-[11px] bg-muted border border-border text-muted-foreground px-2.5 py-1 rounded-lg">
+                      {r}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
-          )}
-        </div>
-      </motion.div>
-    </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }
 
-function PhilosopherCard({ p, index }: { p: Philosopher; index: number }) {
+function PhilosopherEntry({ p, index }: { p: typeof philosophers[0]; index: number }) {
   const [open, setOpen] = useState(false);
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 16 }}
+      initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.07 }}
-      className="bg-card border border-border rounded-2xl overflow-hidden"
+      transition={{ delay: index * 0.06 }}
+      className="border-b border-border/40 last:border-0"
     >
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-start gap-4 p-5 text-left"
+        className="w-full flex items-center gap-4 py-5 text-left"
       >
-        <span className="text-3xl leading-none mt-0.5">{p.emoji}</span>
+        <span className="text-2xl shrink-0">{p.emoji}</span>
         <div className="flex-1 min-w-0">
-          <div className="flex items-baseline gap-2 flex-wrap">
-            <p className="font-bold text-foreground">{p.name}</p>
-            <p className="text-xs text-muted-foreground">{p.years}</p>
+          <div className="flex items-baseline gap-2 mb-0.5">
+            <span className="font-bold text-foreground">{p.name}</span>
+            <span className="text-xs text-muted-foreground/60 font-mono">{p.years}</span>
           </div>
-          <p className="text-xs text-muted-foreground mt-0.5">{p.school}</p>
-          <p className="text-xs text-muted-foreground/70 mt-2 line-clamp-2 italic">"{p.quote}"</p>
+          <p className="text-xs text-muted-foreground italic">{p.tag}</p>
         </div>
-        <motion.div
-          animate={{ rotate: open ? 180 : 0 }}
-          transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-          className="shrink-0 mt-1"
-        >
-          <ChevronDown className="w-4 h-4 text-muted-foreground" />
+        <motion.div animate={{ rotate: open ? 90 : 0 }} transition={{ duration: 0.2 }}>
+          <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
         </motion.div>
       </button>
 
-      <motion.div
-        initial={false}
-        animate={{ height: open ? 'auto' : 0, opacity: open ? 1 : 0 }}
-        transition={{ duration: 0.28, ease: 'easeInOut' }}
-        className="overflow-hidden"
-      >
-        <div className="px-5 pb-5 border-t border-border/50 space-y-4 pt-4">
-          {/* Core Idea */}
-          <div>
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Core Idea</p>
-            <p className="text-sm text-foreground leading-relaxed">{p.coreIdea}</p>
-          </div>
-
-          {/* Quote */}
-          <div className="rounded-xl border border-amber-500/25 bg-amber-500/5 px-4 py-3">
-            <p className="text-sm font-medium text-foreground italic leading-relaxed">"{p.quote}"</p>
-            <p className="text-xs text-muted-foreground mt-2 leading-relaxed">{p.quoteContext}</p>
-          </div>
-
-          {/* How I think about it */}
-          <div className="rounded-xl border border-primary/20 bg-primary/5 px-4 py-3">
-            <p className="text-xs font-semibold text-primary mb-1.5">How I think about it</p>
-            <p className="text-sm text-muted-foreground leading-relaxed">{p.howIThinkAboutIt}</p>
-          </div>
-        </div>
-      </motion.div>
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25, ease: 'easeInOut' }}
+            className="overflow-hidden"
+          >
+            <div className="pb-6 pl-10 space-y-4">
+              <blockquote className="border-l-2 border-amber-500/50 pl-4">
+                <p className="text-sm text-foreground italic leading-relaxed">"{p.quote}"</p>
+              </blockquote>
+              <div className="rounded-xl bg-card border border-border px-4 py-4">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">My take</p>
+                <p className="text-sm text-muted-foreground leading-relaxed">{p.take}</p>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }
@@ -305,116 +284,113 @@ type Tab = 'math' | 'python' | 'philosophy';
 
 export default function Learning() {
   const [activeTab, setActiveTab] = useState<Tab>('math');
-
-  const tabs = [
-    ...sections.map(s => ({ id: s.id as Tab, icon: s.icon, label: s.title })),
-    { id: 'philosophy' as Tab, icon: Scroll, label: 'Philosophy' },
-  ];
-
   const activeSection = sections.find(s => s.id === activeTab);
+
+  const doneCount = activeSection ? activeSection.topics.filter(t => t.status === 'done').length : 0;
+  const total = activeSection ? activeSection.topics.length : 0;
 
   return (
     <PageWrapper>
-      <div className="max-w-3xl mx-auto py-8">
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
-          <h1 className="text-4xl font-bold mb-3">Learning</h1>
-          <p className="text-muted-foreground">
-            My study map — AI/ML foundations, tools, and the thinkers who shaped how I see the world.
+      <div className="max-w-2xl mx-auto py-8">
+
+        {/* Header */}
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="mb-10">
+          <p className="text-xs font-bold uppercase tracking-widest text-primary mb-4">Learning</p>
+          <h1 className="text-[2.6rem] font-black tracking-tight leading-tight mb-4">
+            My study map.
+          </h1>
+          <p className="text-base text-muted-foreground leading-relaxed max-w-lg">
+            AI/ML foundations I'm working through, tools I'm picking up,
+            and philosophers who've actually changed how I think.
+            Honest about what's done and what I'm still avoiding.
           </p>
         </motion.div>
 
-        {/* Honest confession */}
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="mb-8 rounded-2xl border border-amber-500/30 bg-amber-500/5 p-5"
-        >
-          <div className="flex gap-3">
-            <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
-            <div>
-              <p className="font-semibold text-foreground text-sm mb-1.5">My honest problem with learning</p>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                I want to learn <em>everything</em>. Seriously — AI, ML, systems, math, design, business,
-                philosophy, physics. I get excited, I open 12 tabs, I bookmark 40 resources… and then I
-                don't execute. The list below isn't what I've mastered. It's what I <em>think</em> I
-                should learn, which is a very different thing. I'm working on the gap between planning
-                to learn and actually sitting down and doing it. If you struggle with the same thing,
-                you're not alone.
-              </p>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Tab switcher */}
-        <div className="flex gap-2 mb-8 p-1 bg-card border border-border rounded-2xl w-fit flex-wrap">
-          {tabs.map((t) => (
+        {/* Tab strip */}
+        <div className="flex items-center gap-1 mb-8 p-1 bg-card border border-border rounded-2xl w-fit">
+          {[
+            { id: 'math' as Tab,       icon: Brain,        label: 'Math' },
+            { id: 'python' as Tab,     icon: Code2,        label: 'Python' },
+            { id: 'philosophy' as Tab, icon: BookMarked,   label: 'Philosophy' },
+          ].map(t => (
             <button
               key={t.id}
               onClick={() => setActiveTab(t.id)}
               className={cn(
-                'flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all',
+                'flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-medium transition-all',
                 activeTab === t.id
                   ? 'bg-primary text-primary-foreground shadow-sm'
                   : 'text-muted-foreground hover:text-foreground'
               )}
             >
-              <t.icon className="w-4 h-4" />
+              <t.icon className="w-3.5 h-3.5" />
               {t.label}
             </button>
           ))}
         </div>
 
-        {/* AI/ML sections */}
-        {activeSection && (
-          <>
-            <motion.div
-              key={activeTab}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mb-6"
-            >
-              <h2 className={cn('text-2xl font-bold mb-1', activeSection.color)}>{activeSection.title}</h2>
-              <p className="text-muted-foreground text-sm">{activeSection.subtitle}</p>
-            </motion.div>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.2 }}
+          >
+            {/* AI/ML sections */}
+            {activeSection && (
+              <>
+                <div className="flex items-start justify-between mb-1">
+                  <div>
+                    <h2 className={cn('text-xl font-bold', activeSection.color)}>{activeSection.title}</h2>
+                    <p className="text-sm text-muted-foreground">{activeSection.subtitle}</p>
+                  </div>
+                  {doneCount > 0 && (
+                    <span className="text-xs text-muted-foreground bg-card border border-border px-3 py-1.5 rounded-xl">
+                      {doneCount}/{total} done
+                    </span>
+                  )}
+                </div>
 
-            <motion.div
-              key={activeTab + '-list'}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="space-y-3"
-            >
-              {activeSection.topics.map((topic, i) => (
-                <motion.div
-                  key={topic.name}
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.05 }}
-                >
-                  <TopicCard topic={topic} />
-                </motion.div>
-              ))}
-            </motion.div>
-          </>
-        )}
+                {/* Progress bar */}
+                {total > 0 && (
+                  <div className="mt-3 mb-6 h-1 rounded-full bg-border overflow-hidden">
+                    <motion.div
+                      className="h-full bg-primary rounded-full"
+                      initial={{ width: 0 }}
+                      animate={{ width: `${(doneCount / total) * 100}%` }}
+                      transition={{ duration: 0.6, ease: 'easeOut' }}
+                    />
+                  </div>
+                )}
 
-        {/* Philosophy section */}
-        {activeTab === 'philosophy' && (
-          <motion.div key="philosophy" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-            <div className="mb-6">
-              <h2 className="text-2xl font-bold mb-1 text-amber-400">Philosophy</h2>
-              <p className="text-muted-foreground text-sm">
-                Thinkers who changed how I see the world — their ideas, quotes, and what I actually take from them.
-              </p>
-            </div>
+                <div className="bg-card border border-border rounded-2xl overflow-hidden">
+                  {activeSection.topics.map(topic => (
+                    <TopicRow key={topic.name} topic={topic} />
+                  ))}
+                </div>
+              </>
+            )}
 
-            <div className="space-y-3">
-              {philosophers.map((p, i) => (
-                <PhilosopherCard key={p.name} p={p} index={i} />
-              ))}
-            </div>
+            {/* Philosophy */}
+            {activeTab === 'philosophy' && (
+              <>
+                <div className="mb-6">
+                  <h2 className="text-xl font-bold text-amber-400">Philosophy</h2>
+                  <p className="text-sm text-muted-foreground">
+                    Thinkers who've actually changed how I see things — with my honest take, not a Wikipedia summary.
+                  </p>
+                </div>
+
+                <div className="bg-card border border-border rounded-2xl px-4">
+                  {philosophers.map((p, i) => (
+                    <PhilosopherEntry key={p.name} p={p} index={i} />
+                  ))}
+                </div>
+              </>
+            )}
           </motion.div>
-        )}
+        </AnimatePresence>
       </div>
     </PageWrapper>
   );
