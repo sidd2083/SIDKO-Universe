@@ -2,12 +2,22 @@ import { useState, useEffect } from 'react';
 import { PageWrapper } from '@/components/layout/PageWrapper';
 import { apiUrl } from '@/lib/apiBase';
 import { MemoryCard, Memory } from '@/components/cards/MemoryCard';
-import { ThoughtCard, Thought } from '@/components/cards/ThoughtCard';
 import { Skeleton } from '@/components/shared/Skeleton';
 import { Link } from 'wouter';
-import { ArrowRight, Github, ExternalLink, Star, Zap, Globe, MessageSquare } from 'lucide-react';
+import { ArrowRight, Github, ExternalLink, Star, Zap, Globe, MessageSquare, Clock, PenLine } from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
 import ImageLightbox from '@/components/ImageLightbox';
+
+interface Post {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt: string;
+  coverImage?: string;
+  readingTime: number;
+  createdAt: string;
+}
 
 interface SiteSettings {
   heroText: string;
@@ -67,8 +77,8 @@ export default function Home() {
   const [settingsLoaded, setSettingsLoaded] = useState(false);
   const [memories, setMemories] = useState<Memory[]>([]);
   const [memoriesLoading, setMemoriesLoading] = useState(true);
-  const [thoughts, setThoughts] = useState<Thought[]>([]);
-  const [thoughtsLoading, setThoughtsLoading] = useState(true);
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [postsLoading, setPostsLoading] = useState(true);
   const [nglMessages, setNglMessages] = useState<any[]>([]);
   const [nglLoading, setNglLoading] = useState(true);
   const [lightboxImages, setLightboxImages] = useState<string[]>([]);
@@ -86,9 +96,9 @@ export default function Home() {
     fetch(apiUrl('/api/memories'))
       .then(r => r.json()).then(d => { setMemories(Array.isArray(d) ? d.slice(0, 5) : []); setMemoriesLoading(false); })
       .catch(() => setMemoriesLoading(false));
-    fetch(apiUrl('/api/thoughts'))
-      .then(r => r.json()).then(d => { setThoughts(Array.isArray(d) ? d.slice(0, 5) : []); setThoughtsLoading(false); })
-      .catch(() => setThoughtsLoading(false));
+    fetch(apiUrl('/api/posts'))
+      .then(r => r.json()).then(d => { setPosts(Array.isArray(d) ? d.slice(0, 5) : []); setPostsLoading(false); })
+      .catch(() => setPostsLoading(false));
     fetch(apiUrl('/api/ngl'))
       .then(r => r.json()).then(d => { setNglMessages(Array.isArray(d) ? d.slice(0, 5) : []); setNglLoading(false); })
       .catch(() => setNglLoading(false));
@@ -238,19 +248,51 @@ export default function Home() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h2 className="text-2xl font-bold">Sid Philosophy</h2>
-            <p className="text-xs text-muted-foreground mt-0.5">my thoughts, ideas, things on my mind</p>
+            <p className="text-xs text-muted-foreground mt-0.5">my writing, ideas, things on my mind</p>
           </div>
           <Link href="/blog" className="text-sm font-medium text-primary hover:underline flex items-center gap-1">
             View All <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
-        <div className="grid sm:grid-cols-2 gap-4">
-          {thoughtsLoading
-            ? Array(4).fill(0).map((_, i) => <Skeleton key={i} className="h-32 rounded-2xl" />)
-            : thoughts.length > 0
-            ? thoughts.map(t => <ThoughtCard key={t.id} thought={t} />)
+        <div className="space-y-3">
+          {postsLoading
+            ? Array(3).fill(0).map((_, i) => <Skeleton key={i} className="h-24 rounded-2xl" />)
+            : posts.length > 0
+            ? posts.map(post => (
+              <Link key={post.id} href={`/blog/${post.id}`}>
+                <motion.div
+                  whileHover={{ x: 4 }}
+                  transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+                  className="group flex items-start gap-4 bg-card border border-border rounded-2xl px-5 py-4 hover:border-primary/40 hover:bg-primary/[0.02] transition-colors cursor-pointer"
+                >
+                  <div className="mt-0.5 w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                    <PenLine className="w-4 h-4 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-sm text-foreground group-hover:text-primary transition-colors leading-snug truncate">
+                      {post.title}
+                    </h3>
+                    {post.excerpt && (
+                      <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2 leading-relaxed">
+                        {post.excerpt}
+                      </p>
+                    )}
+                    <div className="flex items-center gap-3 mt-2">
+                      <span className="flex items-center gap-1 text-[10px] text-muted-foreground/60">
+                        <Clock className="w-3 h-3" />
+                        {post.readingTime || 3} min read
+                      </span>
+                      <span className="text-[10px] text-muted-foreground/60">
+                        {(() => { try { return formatDistanceToNow(new Date(post.createdAt), { addSuffix: true }); } catch { return ''; } })()}
+                      </span>
+                    </div>
+                  </div>
+                  <ArrowRight className="w-4 h-4 text-muted-foreground/40 group-hover:text-primary transition-colors shrink-0 mt-1" />
+                </motion.div>
+              </Link>
+            ))
             : (
-              <div className="col-span-full text-center py-10 text-muted-foreground border border-dashed border-border rounded-2xl">
+              <div className="text-center py-10 text-muted-foreground border border-dashed border-border rounded-2xl">
                 Nothing written yet — check back soon.
               </div>
             )}
