@@ -8,7 +8,9 @@ import { withAdminHeaders } from '@/lib/adminAuth';
 import { Loader2, Globe, FileText } from 'lucide-react';
 import { format } from 'date-fns';
 
-interface Post { id: string; title: string; slug: string; content: string; excerpt: string; coverImage?: string; readingTime: number; published: boolean; createdAt: string; }
+const CATEGORY_OPTIONS = ['General', 'Life', 'Tech', 'School', 'Philosophy', 'Nepal', 'Random'];
+
+interface Post { id: string; title: string; slug: string; content: string; excerpt: string; coverImage?: string; readingTime: number; published: boolean; category: string; createdAt: string; }
 
 export default function BlogEditor() {
   const { isAdmin, isLoading } = useAuth();
@@ -18,6 +20,7 @@ export default function BlogEditor() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
+  const [category, setCategory] = useState('General');
   const [isSaving, setIsSaving] = useState(false);
 
   const load = () => {
@@ -45,10 +48,10 @@ export default function BlogEditor() {
         method: 'POST',
         headers: withAdminHeaders({ 'Content-Type': 'application/json' }),
         credentials: 'include',
-        body: JSON.stringify({ title: title.trim(), slug, content: content.trim(), excerpt, coverImage: '', readingTime, published }),
+        body: JSON.stringify({ title: title.trim(), slug, content: content.trim(), excerpt, coverImage: '', readingTime, published, category }),
       });
       if (!res.ok) throw new Error('Failed');
-      setTitle(''); setContent('');
+      setTitle(''); setContent(''); setCategory('General');
       toast({ title: published ? '🚀 Published!' : '📝 Draft saved' });
       load();
     } catch {
@@ -88,8 +91,25 @@ export default function BlogEditor() {
           <div className="bg-card border border-border rounded-2xl p-6 shadow-sm flex flex-col h-[80vh]">
             <input type="text" placeholder="Title" value={title} onChange={e => setTitle(e.target.value)}
               className="w-full bg-transparent border-b border-border py-3 text-2xl font-bold focus:outline-none focus:border-primary/50 text-foreground mb-4" />
+            {/* Category picker */}
+            <div className="flex flex-wrap gap-2 pb-3 border-b border-border mb-3">
+              {CATEGORY_OPTIONS.map(cat => (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => setCategory(cat)}
+                  className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${
+                    category === cat
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-muted text-muted-foreground hover:bg-primary/10 hover:text-primary'
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
             <textarea placeholder="Write your article here... (Markdown supported)" value={content} onChange={e => setContent(e.target.value)}
-              className="flex-1 bg-transparent resize-none focus:outline-none text-foreground leading-relaxed text-sm border-t border-border pt-4" />
+              className="flex-1 bg-transparent resize-none focus:outline-none text-foreground leading-relaxed text-sm pt-2" />
             <div className="flex gap-2 pt-4 border-t border-border shrink-0 mt-4">
               <button onClick={() => handleSave(false)} disabled={isSaving || !title || !content}
                 className="flex-1 flex items-center justify-center gap-2 bg-muted text-foreground px-4 py-2.5 rounded-xl font-medium text-sm hover:bg-muted/80 disabled:opacity-50">

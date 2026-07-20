@@ -13,12 +13,14 @@ interface Post {
   excerpt: string;
   coverImage?: string;
   readingTime: number;
+  category: string;
   createdAt: string;
 }
 
 export default function Blog() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeCategory, setActiveCategory] = useState('All');
 
   useEffect(() => {
     fetch(apiUrl('/api/posts'))
@@ -26,6 +28,9 @@ export default function Blog() {
       .then(data => { setPosts(Array.isArray(data) ? data : []); setLoading(false); })
       .catch(() => setLoading(false));
   }, []);
+
+  const categories = ['All', ...Array.from(new Set(posts.map(p => p.category).filter(Boolean)))];
+  const filtered = activeCategory === 'All' ? posts : posts.filter(p => p.category === activeCategory);
 
   return (
     <PageWrapper>
@@ -76,10 +81,36 @@ export default function Blog() {
           </motion.div>
         )}
 
+        {/* Category filter pills */}
+        {!loading && categories.length > 1 && (
+          <div className="flex flex-wrap gap-2 mb-10">
+            {categories.map(cat => (
+              <button
+                key={cat}
+                onClick={() => setActiveCategory(cat)}
+                className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+                  activeCategory === cat
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-card border border-border text-muted-foreground hover:border-primary/40 hover:text-foreground'
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Empty after filter */}
+        {!loading && posts.length > 0 && filtered.length === 0 && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-16 text-center">
+            <p className="text-muted-foreground text-sm">No posts in "{activeCategory}" yet.</p>
+          </motion.div>
+        )}
+
         {/* Posts */}
-        {!loading && posts.length > 0 && (
+        {!loading && filtered.length > 0 && (
           <div className="space-y-0 divide-y divide-border/50">
-            {posts.map((p, i) => (
+            {filtered.map((p, i) => (
               <motion.div
                 key={p.id}
                 initial={{ opacity: 0, y: 10 }}

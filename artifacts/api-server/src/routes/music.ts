@@ -77,39 +77,47 @@ router.post('/music', async (req, res): Promise<void> => {
 });
 
 /** POST /api/music/upload — upload an audio file directly from disk */
-router.post('/music/upload', (req, res, next) => {
+router.post('/music/upload', (req: any, res: any): void => {
   if (!requireAdmin(req, res)) return;
-  next();
-}, upload.single('file'), async (req: any, res: any): Promise<void> => {
-  try {
-    if (!req.file) { res.status(400).json({ error: 'No audio file received' }); return; }
 
-    const { title } = req.body as { title?: string };
-    if (!title?.trim()) {
-      fs.unlink(req.file.path, () => {});
-      res.status(400).json({ error: 'title is required' });
+  // Run multer with a callback so errors are returned as JSON (not HTML)
+  upload.single('file')(req, res, async (err: any) => {
+    if (err) {
+      res.status(400).json({ error: err.message ?? 'File upload error' });
       return;
     }
+    try {
+      if (!req.file) { res.status(400).json({ error: 'No audio file received' }); return; }
 
-    // Build a public URL that the browser can stream
-    const baseUrl = process.env.API_BASE_URL ?? `http://localhost:${process.env.PORT ?? 8080}`;
-    const fileUrl = `${baseUrl}/api/uploads/${req.file.filename}`;
+      const { title } = req.body as { title?: string };
+      if (!title?.trim()) {
+        fs.unlink(req.file.path, () => {});
+        res.status(400).json({ error: 'title is required' });
+        return;
+      }
 
-    const existing = await getAll();
-    const id = `track_${Date.now()}`;
-    const newTrack: Track = {
-      id,
-      title: title.trim(),
-      url: fileUrl,
-      coverImage: '',
-      order: existing.length,
-    };
-    await getAdminFirestore().collection(COL).doc(id).set(newTrack);
-    invalidate(CACHE_KEY);
-    res.status(201).json(newTrack);
-  } catch (e: any) {
-    res.status(500).json({ error: String(e) });
-  }
+      // Build a public URL that the browser can stream.
+      // In Replit dev the Vite proxy forwards /api → localhost:PORT, so we
+      // store a root-relative path that works from any domain.
+      const fileUrl = `/api/uploads/${req.file.filename}`;
+
+      const existing = await getAll();
+      const id = `track_${Date.now()}`;
+      const newTrack: Track = {
+        id,
+        title: title.trim(),
+        url: fileUrl,
+        coverImage: '',
+        order: existing.length,
+      };
+      await getAdminFirestore().collection(COL).doc(id).set(newTrack);
+      invalidate(CACHE_KEY);
+      res.status(201).json(newTrack);
+    } catch (e: any) {
+      if (req.file) fs.unlink(req.file.path, () => {});
+      res.status(500).json({ error: String(e) });
+    }
+  });
 });
 
 router.delete('/music/:id', async (req, res): Promise<void> => {

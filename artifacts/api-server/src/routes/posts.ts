@@ -3,7 +3,7 @@ import { getAdminFirestore } from '../lib/firebaseAdmin.js';
 import { isValidSessionToken, extractAdminToken } from '../lib/adminSession.js';
 import { cached, invalidate } from '../lib/cache.js';
 
-export interface Post { id: string; title: string; slug: string; content: string; excerpt: string; coverImage?: string; readingTime: number; published: boolean; createdAt: string; }
+export interface Post { id: string; title: string; slug: string; content: string; excerpt: string; coverImage?: string; readingTime: number; published: boolean; category: string; createdAt: string; }
 
 const COL = 'posts';
 const CACHE_KEY = 'posts';
@@ -51,11 +51,11 @@ router.get('/posts/:slug', async (req, res): Promise<void> => {
 
 router.post('/posts', async (req, res): Promise<void> => {
   if (!requireAdmin(req, res)) return;
-  const { title, content, excerpt, coverImage, readingTime, published } = req.body as Partial<Post>;
+  const { title, content, excerpt, coverImage, readingTime, published, category } = req.body as Partial<Post>;
   if (!title?.trim() || !content?.trim()) { res.status(400).json({ error: 'title and content required' }); return; }
   try {
     const id = `post_${Date.now()}`;
-    const p: Post = { id, title: title.trim(), slug: slugify(title), content: content.trim(), excerpt: excerpt?.trim() || content.slice(0, 200), coverImage: coverImage || '', readingTime: readingTime || Math.ceil(content.length / 1000), published: published ?? false, createdAt: new Date().toISOString() };
+    const p: Post = { id, title: title.trim(), slug: slugify(title), content: content.trim(), excerpt: excerpt?.trim() || content.slice(0, 200), coverImage: coverImage || '', readingTime: readingTime || Math.ceil(content.length / 1000), published: published ?? false, category: category?.trim() || 'General', createdAt: new Date().toISOString() };
     await getAdminFirestore().collection(COL).doc(id).set(p);
     invalidate(CACHE_KEY);
     res.status(201).json(p);
