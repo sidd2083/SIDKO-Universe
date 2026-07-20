@@ -146,34 +146,39 @@ export default function Memories() {
           {selected && (
             <motion.div
               key="detail-overlay"
-              className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4"
+              className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setSelected(null)}
             >
               <motion.div
-                initial={{ opacity: 0, y: 40 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 40 }}
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                 onClick={e => e.stopPropagation()}
-                className="bg-card border border-border rounded-t-3xl sm:rounded-2xl w-full sm:max-w-lg overflow-hidden shadow-2xl max-h-[90vh] overflow-y-auto"
+                className="bg-card border border-border rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl"
+                style={{ maxHeight: 'min(90vh, 650px)' }}
               >
+                <div className="overflow-y-auto" style={{ maxHeight: 'min(90vh, 650px)' }}>
                 {/* Image(s) */}
                 {selected.images?.length > 0 && (
                   <div className="relative">
                     {/* Main image — click to open lightbox */}
                     <div
-                      className="aspect-video bg-muted overflow-hidden cursor-zoom-in"
+                      className="relative bg-muted overflow-hidden cursor-zoom-in"
+                      style={{ maxHeight: '55vw', minHeight: 200 }}
                       onClick={() => openLightbox(selected, 0)}
                     >
                       <img
                         src={selected.images[0]}
                         alt={selected.title}
-                        className="w-full h-full object-cover"
+                        className="w-full object-cover"
+                        style={{ maxHeight: '55vw', minHeight: 200 }}
                       />
                       <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity bg-black/20">
-                        <span className="text-white text-xs font-medium bg-black/50 px-3 py-1.5 rounded-full">
+                        <span className="text-white text-xs font-medium bg-black/60 px-3 py-1.5 rounded-full">
                           Tap to view full size
                         </span>
                       </div>
@@ -222,6 +227,7 @@ export default function Memories() {
                     </div>
                   )}
                 </div>
+                </div>{/* end overflow-y-auto */}
               </motion.div>
             </motion.div>
           )}

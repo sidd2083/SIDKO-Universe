@@ -76,13 +76,25 @@ export function MobileHeader() {
           {/* Left: logo or page title */}
           <Link href="/">
             <span className="flex items-center gap-2 cursor-pointer">
-              <SidLogoIcon size="sm" />
               {pageTitle ? (
                 <span className="font-bold text-base tracking-tight text-foreground">
                   {pageTitle}
                 </span>
               ) : (
-                <SidWordmark className="text-lg" />
+                <span
+                  style={{
+                    fontFamily: "'Inter', 'SF Pro Display', system-ui, sans-serif",
+                    fontWeight: 800,
+                    fontSize: '1.15rem',
+                    letterSpacing: '-0.04em',
+                    background: 'linear-gradient(135deg, #3b82f6 0%, #818cf8 60%, #c084fc 100%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text',
+                  }}
+                >
+                  Siddhant
+                </span>
               )}
             </span>
           </Link>

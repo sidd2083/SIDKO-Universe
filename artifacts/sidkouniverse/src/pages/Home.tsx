@@ -5,8 +5,9 @@ import { MemoryCard, Memory } from '@/components/cards/MemoryCard';
 import { ThoughtCard, Thought } from '@/components/cards/ThoughtCard';
 import { Skeleton } from '@/components/shared/Skeleton';
 import { Link } from 'wouter';
-import { ArrowRight, Github, ExternalLink, Star, Zap, Globe, MessageSquare } from 'lucide-react';
+import { ArrowRight, Github, ExternalLink, Star, Zap, Globe, MessageSquare, Download } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import ImageLightbox from '@/components/ImageLightbox';
 
 interface SiteSettings {
   heroText: string;
@@ -70,10 +71,26 @@ export default function Home() {
   const [thoughtsLoading, setThoughtsLoading] = useState(true);
   const [nglMessages, setNglMessages] = useState<any[]>([]);
   const [nglLoading, setNglLoading] = useState(true);
+  const [lightboxImages, setLightboxImages] = useState<string[]>([]);
+  const [showInstallBanner, setShowInstallBanner] = useState(true);
+  // PWA install prompt
+  const [installPrompt, setInstallPrompt] = useState<any>(null);
+  const [canInstall, setCanInstall] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      e.preventDefault();
+      setInstallPrompt(e);
+      setCanInstall(true);
+    };
+    window.addEventListener('beforeinstallprompt', handler);
+    window.addEventListener('appinstalled', () => setCanInstall(false));
+    return () => window.removeEventListener('beforeinstallprompt', handler);
   }, []);
 
   useEffect(() => {
@@ -82,15 +99,23 @@ export default function Home() {
       .then((data: Partial<SiteSettings>) => { setSettings({ ...DEFAULT_SETTINGS, ...data }); setSettingsLoaded(true); })
       .catch(() => setSettingsLoaded(true));
     fetch(apiUrl('/api/memories'))
-      .then(r => r.json()).then(d => { setMemories(Array.isArray(d) ? d.slice(0, 8) : []); setMemoriesLoading(false); })
+      .then(r => r.json()).then(d => { setMemories(Array.isArray(d) ? d.slice(0, 5) : []); setMemoriesLoading(false); })
       .catch(() => setMemoriesLoading(false));
     fetch(apiUrl('/api/thoughts'))
-      .then(r => r.json()).then(d => { setThoughts(Array.isArray(d) ? d.slice(0, 4) : []); setThoughtsLoading(false); })
+      .then(r => r.json()).then(d => { setThoughts(Array.isArray(d) ? d.slice(0, 5) : []); setThoughtsLoading(false); })
       .catch(() => setThoughtsLoading(false));
     fetch(apiUrl('/api/ngl'))
-      .then(r => r.json()).then(d => { setNglMessages(Array.isArray(d) ? d.slice(0, 3) : []); setNglLoading(false); })
+      .then(r => r.json()).then(d => { setNglMessages(Array.isArray(d) ? d.slice(0, 5) : []); setNglLoading(false); })
       .catch(() => setNglLoading(false));
   }, []);
+
+  const handleInstall = async () => {
+    if (!installPrompt) return;
+    installPrompt.prompt();
+    const { outcome } = await installPrompt.userChoice;
+    if (outcome === 'accepted') setCanInstall(false);
+    setInstallPrompt(null);
+  };
 
   const emoji = inferEmoji(settings.currentStatus, settings.statusEmoji);
 
@@ -198,6 +223,43 @@ export default function Home() {
         </motion.div>
       </section>
 
+      {/* ── App Install Banner ── */}
+      {showInstallBanner && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8 relative flex items-center gap-4 px-5 py-4 rounded-2xl bg-primary/5 border border-primary/20"
+        >
+          <div className="text-2xl shrink-0">📱</div>
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold text-sm text-foreground">Get the SidkoUniverse app</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Don't want to visit the site every time? Install the app and open it like any app on your phone.
+            </p>
+          </div>
+          {canInstall ? (
+            <button
+              onClick={handleInstall}
+              className="shrink-0 flex items-center gap-1.5 bg-primary text-primary-foreground px-3 py-2 rounded-xl text-xs font-semibold hover:opacity-90 transition-opacity"
+            >
+              <Download className="w-3.5 h-3.5" />
+              Install
+            </button>
+          ) : (
+            <span className="shrink-0 text-xs text-muted-foreground bg-muted px-3 py-2 rounded-xl">
+              Tap ⋯ → Add to Home Screen
+            </span>
+          )}
+          <button
+            onClick={() => setShowInstallBanner(false)}
+            className="absolute top-2 right-2 w-5 h-5 flex items-center justify-center text-muted-foreground hover:text-foreground text-lg leading-none"
+            aria-label="Dismiss"
+          >
+            ×
+          </button>
+        </motion.div>
+      )}
+
       {/* ── Latest Memories ── */}
       <section className="mb-16">
         <div className="flex items-center justify-between mb-6">
@@ -206,21 +268,37 @@ export default function Home() {
             View All <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
           {memoriesLoading
-            ? Array(4).fill(0).map((_, i) => <Skeleton key={i} className="aspect-[4/5] rounded-2xl" />)
+            ? Array(5).fill(0).map((_, i) => <Skeleton key={i} className="aspect-[4/5] rounded-2xl" />)
             : memories.length > 0
-            ? memories.map(m => <MemoryCard key={m.id} memory={m} onClick={() => {}} />)
+            ? memories.map(m => (
+                <MemoryCard
+                  key={m.id}
+                  memory={m}
+                  onClick={() => { if (m.images?.length) setLightboxImages(m.images); }}
+                />
+              ))
             : <div className="col-span-full text-center py-10 text-muted-foreground">No memories yet.</div>}
         </div>
       </section>
 
-      {/* ── Articles & Thinking ── */}
+      {/* Memory lightbox for home page */}
+      <AnimatePresence>
+        {lightboxImages.length > 0 && (
+          <ImageLightbox
+            images={lightboxImages}
+            onClose={() => setLightboxImages([])}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* ── Sid Philosophy ── */}
       <section className="mb-16">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-2xl font-bold">Articles & Thinking</h2>
-            <p className="text-xs text-muted-foreground mt-0.5">thoughts, ideas, things on my mind</p>
+            <h2 className="text-2xl font-bold">Sid Philosophy</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">my thoughts, ideas, things on my mind</p>
           </div>
           <Link href="/thoughts" className="text-sm font-medium text-primary hover:underline flex items-center gap-1">
             View All <ArrowRight className="w-4 h-4" />

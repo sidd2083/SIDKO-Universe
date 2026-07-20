@@ -27,8 +27,9 @@ const timeline = [
   { time: '6 AM',       emoji: '🏋️', label: 'Gym',                note: 'Non-negotiable. If I miss this the whole day feels off.' },
   { time: '8 AM',       emoji: '📚', label: 'College',             note: 'Hetauda School of Management. Science stream.' },
   { time: '1 PM',       emoji: '🍱', label: 'Back home, eat',      note: 'Usually rice. We\'re Nepali.' },
-  { time: '2–5 PM',     emoji: '💻', label: 'Deep work block',     note: 'Building, reading, writing code. No social media.' },
-  { time: '5–7 PM',     emoji: '🧠', label: 'Learning',            note: 'AI/ML concepts, math, random Wikipedia spirals.' },
+  { time: '2–4 PM',     emoji: '📖', label: 'Studies',             note: 'Academic work, exam prep, staying on top of subjects.' },
+  { time: '4–6 PM',     emoji: '💻', label: 'Deep work block',     note: 'Building, reading, writing code. No social media.' },
+  { time: '6–7 PM',     emoji: '🧠', label: 'Learning',            note: 'AI/ML concepts, math, random Wikipedia spirals.' },
   { time: '7 PM',       emoji: '🍽️', label: 'Dinner + family',     note: 'Actual human interaction.' },
   { time: '8–11 PM',    emoji: '🎵', label: 'Music + wind down',   note: 'Sometimes journaling. Mostly overthinking.' },
 ];
@@ -59,9 +60,19 @@ export default function About() {
         <motion.section {...fade(0.06)}>
           <div className="border-l-2 border-primary/40 pl-6 space-y-4 text-muted-foreground leading-relaxed">
             <p className="text-base">
+              I'm not a good student academically. I'm not going to pretend otherwise. 
+              Grades don't excite me. Building things does. I'd rather spend three hours 
+              shipping a feature than memorizing something I'll forget in a week.
+            </p>
+            <p className="text-base">
               I get overwhelmed easily. I want to learn AI, math, physics, design, business — all of it,
               all at once. Most days I end up doing none of it properly. I start things and don't finish them.
               I have a folder called "ideas" with 200 notes in it. I've shipped maybe 5.
+            </p>
+            <p className="text-base">
+              But I've built several real projects — including a freelancing and software website.
+              I build things for clients, for friends, for problems I see around me.
+              Not because I had to. Because I couldn't stop.
             </p>
             <p className="text-base">
               But I keep showing up. I built this site because I needed something that was
@@ -84,14 +95,14 @@ export default function About() {
               { icon: Brain,         text: 'Going deep on AI & ML',          sub: 'Papers, code, a lot of confusion' },
               { icon: GraduationCap, text: 'Surviving Grade 11, Science',    sub: 'Hetauda School of Management' },
               { icon: Dumbbell,      text: 'Gym every morning',              sub: 'The one habit that stuck' },
-              { icon: Cpu,           text: 'Learning to build AI products',  sub: 'Not just use them — build them' },
+              { icon: Cpu,           text: 'Learning to build AI products',  sub: 'Not just use them, build them' },
               { icon: Music,         text: 'Always listening to music',      sub: 'Literally always. Check the player.' },
             ].map(({ icon: Icon, text, sub }) => (
               <div key={text} className="flex items-center gap-4 py-3 border-b border-border/50 last:border-0">
                 <Icon className="w-4 h-4 text-muted-foreground shrink-0" />
                 <div className="flex-1 min-w-0">
                   <span className="text-sm font-medium text-foreground">{text}</span>
-                  <span className="text-xs text-muted-foreground ml-2">— {sub}</span>
+                  <span className="text-xs text-muted-foreground ml-2 italic">{sub}</span>
                 </div>
               </div>
             ))}

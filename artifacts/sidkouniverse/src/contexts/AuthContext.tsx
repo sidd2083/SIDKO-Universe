@@ -70,12 +70,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   // registered in adminAuth.ts), so this correctly reflects server-side state.
   const { data: session, isLoading: sessionLoading } = useGetAdminSession();
 
-  // Admin if EITHER localStorage has the flag OR the API Bearer check says so
-  const isAdmin = sessionAdmin || Boolean(session?.isAdmin);
+  // Admin ONLY when the server confirms via Bearer token.
+  // localStorage is purely a hint that we *might* be admin; the server is the
+  // authority and must respond before guards can make the call.
+  const isAdmin = Boolean(session?.isAdmin);
 
-  // Not loading once Firebase resolves AND (we already know we're admin via
-  // localStorage, OR the server session check has completed).
-  const isLoading = userLoading || (!sessionAdmin && sessionLoading);
+  // Stay in loading state until BOTH Firebase and the server session check
+  // have resolved — this prevents dashboard guards from firing prematurely
+  // and ejecting a valid admin before the server responds.
+  const isLoading = userLoading || sessionLoading;
 
   // If the server says we're admin but localStorage flag is missing, restore it.
   useEffect(() => {

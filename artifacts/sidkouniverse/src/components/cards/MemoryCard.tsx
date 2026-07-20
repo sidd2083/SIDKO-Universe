@@ -40,6 +40,8 @@ export function MemoryCard({ memory, onClick, className }: MemoryCardProps) {
           <img
             src={memory.images[0]}
             alt={memory.title}
+            loading="lazy"
+            decoding="async"
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
           />
         ) : (
