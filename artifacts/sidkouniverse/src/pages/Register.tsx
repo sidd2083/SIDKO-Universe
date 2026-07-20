@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
 import { PageWrapper } from '@/components/layout/PageWrapper';
-import { db, isFirebaseConfigured } from '@/lib/firebase';
-import { getAuth, createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { getAuth, signInWithCustomToken, updateProfile } from 'firebase/auth';
 import { Link, useLocation } from 'wouter';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
+import { apiUrl } from '@/lib/apiBase';
 
 export default function Register() {
   const [username, setUsername] = useState('');
@@ -18,42 +17,29 @@ export default function Register() {
     e.preventDefault();
     if (!username.trim() || password.length < 6) return;
 
-    if (!isFirebaseConfigured) {
-      toast({
-        title: "Sign-up is not set up yet",
-        description: "Visitor accounts aren't available yet.",
-        variant: "destructive"
-      });
-      return;
-    }
-
     setIsLoading(true);
     try {
-      const cleanUsername = username.toLowerCase().replace(/[^a-z0-9]/g, '');
-      const email = `${cleanUsername}@sidkouniverse.local`;
-
-      const userCredential = await createUserWithEmailAndPassword(getAuth(), email, password);
-      
-      await updateProfile(userCredential.user, {
-        displayName: cleanUsername
+      // Server creates the Firebase user via Admin SDK (no Email/Password
+      // provider needed), stores the password hash, and returns a custom token.
+      const res = await fetch(apiUrl('/api/visitor/register'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: username.trim(), password }),
       });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Registration failed.');
 
-      await setDoc(doc(db, 'users', userCredential.user.uid), {
-        uid: userCredential.user.uid,
-        username: cleanUsername,
-        createdAt: serverTimestamp(),
-        bookmarks: [],
-        likedMemories: [],
-        likedThoughts: []
-      });
+      // Exchange custom token for a Firebase session
+      const credential = await signInWithCustomToken(getAuth(), data.customToken);
+      await updateProfile(credential.user, { displayName: username.toLowerCase().replace(/[^a-z0-9]/g, '') });
 
-      toast({ title: "Account created!" });
+      toast({ title: 'Account created! Welcome 👋' });
       setLocation('/');
     } catch (error: any) {
       toast({
-        title: "Registration failed",
-        description: error.message || "Failed to create account.",
-        variant: "destructive"
+        title: 'Registration failed',
+        description: error.message || 'Failed to create account.',
+        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);

@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'wouter';
 import { motion } from 'framer-motion';
 import {
   Home, Image as ImageIcon, BookOpen, PenTool, User,
   MessageSquare, MessageCircle,
-  LogOut, Sun, Moon, LayoutDashboard, GraduationCap, Users, Inbox,
+  LogOut, Sun, Moon, LayoutDashboard, GraduationCap, Users, Inbox, Download,
 } from 'lucide-react';
 import { useAuth, clearAdminSession } from '@/contexts/AuthContext';
 import { clearAdminToken } from '@/lib/adminAuth';
@@ -34,6 +34,23 @@ export function Sidebar() {
   const { theme, setTheme } = useTheme();
   const queryClient = useQueryClient();
   const logoutAdminMutation = useLogoutAdmin();
+
+  // PWA install prompt (desktop)
+  const installPromptRef = useRef<any>(null);
+  const [canInstall, setCanInstall] = useState(false);
+  useEffect(() => {
+    const handler = (e: Event) => { e.preventDefault(); installPromptRef.current = e; setCanInstall(true); };
+    window.addEventListener('beforeinstallprompt', handler);
+    window.addEventListener('appinstalled', () => setCanInstall(false));
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+  const handleInstall = async () => {
+    if (!installPromptRef.current) return;
+    installPromptRef.current.prompt();
+    const { outcome } = await installPromptRef.current.userChoice;
+    if (outcome === 'accepted') setCanInstall(false);
+    installPromptRef.current = null;
+  };
 
   const handleLogout = async () => {
     if (isFirebaseConfigured) {
@@ -111,6 +128,17 @@ export function Sidebar() {
 
       {/* Bottom */}
       <div className="p-3 border-t border-border space-y-2">
+        {/* PWA install — only shown when browser exposes the install prompt */}
+        {canInstall && (
+          <button
+            onClick={handleInstall}
+            className="flex items-center gap-3 w-full px-3 py-2 rounded-xl text-sm text-primary bg-primary/10 hover:bg-primary/15 transition-colors font-medium"
+          >
+            <Download className="w-4 h-4 shrink-0" />
+            Install App
+          </button>
+        )}
+
         {/* Theme toggle */}
         <button
           onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}

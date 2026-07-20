@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { PageWrapper } from '@/components/layout/PageWrapper';
-import { isFirebaseConfigured } from '@/lib/firebase';
-import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
+import { getAuth, signInWithCustomToken } from 'firebase/auth';
 import { Link, useLocation } from 'wouter';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
@@ -22,9 +21,7 @@ export default function Login() {
 
     setIsLoading(true);
     try {
-      // Always try the admin API first. If it succeeds, the user is the site
-      // owner — redirect straight to the dashboard instead of treating them
-      // as a regular visitor.
+      // Try admin login first. If it succeeds, user is the site owner.
       const adminRes = await fetch(apiUrl('/api/auth/login'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -41,24 +38,23 @@ export default function Login() {
         return;
       }
 
-      // Not admin — fall through to Firebase visitor login
-      if (!isFirebaseConfigured) {
-        toast({
-          title: 'Sign-in is not set up yet',
-          description: 'Visitor accounts aren\'t available yet.',
-          variant: 'destructive',
-        });
-        return;
-      }
+      // Not admin — try visitor login via custom token (server verifies password hash)
+      const visitorRes = await fetch(apiUrl('/api/visitor/login'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: username.trim(), password }),
+      });
 
-      const email = `${username.toLowerCase().trim()}@sidkouniverse.local`;
-      await signInWithEmailAndPassword(getAuth(), email, password);
+      const visitorData = await visitorRes.json();
+      if (!visitorRes.ok) throw new Error(visitorData.error ?? 'Login failed.');
+
+      await signInWithCustomToken(getAuth(), visitorData.customToken);
       toast({ title: 'Welcome back!' });
       setLocation('/');
     } catch (error: any) {
       toast({
         title: 'Login failed',
-        description: 'Invalid username or password.',
+        description: error.message || 'Invalid username or password.',
         variant: 'destructive',
       });
     } finally {

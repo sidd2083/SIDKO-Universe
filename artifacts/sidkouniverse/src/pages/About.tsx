@@ -50,7 +50,7 @@ export default function About() {
             who I'm becoming while doing it.
           </p>
           <p className="text-base text-muted-foreground/80 leading-relaxed">
-            This site is the real version of me — not the one curated for Instagram or a resume.
+            This site is the real version of me, not the one curated for Instagram or a resume.
             It has my memories, my half-baked thoughts, music I'm obsessed with, and projects I'm
             actually working on. You're welcome to stay.
           </p>
@@ -70,7 +70,7 @@ export default function About() {
               I have a folder called "ideas" with 200 notes in it. I've shipped maybe 5.
             </p>
             <p className="text-base">
-              But I've built several real projects — including a freelancing and software website.
+              But I've built several real projects, including a freelancing and software website.
               I build things for clients, for friends, for problems I see around me.
               Not because I had to. Because I couldn't stop.
             </p>
