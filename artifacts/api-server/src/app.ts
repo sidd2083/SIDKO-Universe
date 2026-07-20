@@ -80,6 +80,10 @@ app.use(
       if (/^https:\/\/[a-z0-9-]+\.vercel\.app$/i.test(origin)) {
         return callback(null, true);
       }
+      // Custom production domain
+      if (/^https?:\/\/(www\.)?siddhantlmc\.xyz(:\d+)?$/.test(origin)) {
+        return callback(null, true);
+      }
       // Localhost (dev)
       if (/^https?:\/\/localhost(:\d+)?$/.test(origin)) {
         return callback(null, true);
