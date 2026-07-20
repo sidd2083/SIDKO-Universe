@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { PageWrapper } from '@/components/layout/PageWrapper';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Code2, Globe, Camera, Brain, Database,
   MapPin, Rocket, GraduationCap, Layers,
-  Dumbbell, Music, Flame, BookOpen, Cpu, ArrowUpRight,
+  Dumbbell, Music, Flame, BookOpen, Cpu, ArrowUpRight, ChevronDown,
 } from 'lucide-react';
 import { Link } from 'wouter';
 
@@ -23,18 +23,83 @@ const skills = [
   { icon: Camera,   label: 'Photo Editing',      sub: 'Lightroom · composition · retouching',  color: 'text-cyan-400 bg-cyan-400/10' },
 ];
 
+const drinkIngredients = [
+  { emoji: '🥛', name: 'Milk' },
+  { emoji: '🌾', name: 'Oats' },
+  { emoji: '🥜', name: 'Peanut butter' },
+  { emoji: '🍯', name: 'Honey' },
+  { emoji: '🌰', name: 'Almonds' },
+  { emoji: '🍌', name: 'Banana' },
+];
+
 const timeline = [
-  { time: '6 AM',       emoji: '🏋️', label: 'Gym',                note: 'Non-negotiable. If I miss this the whole day feels off.' },
-  { time: '8 AM',       emoji: '📚', label: 'College',             note: 'Hetauda School of Management. Science stream.' },
-  { time: '1 PM',       emoji: '🍱', label: 'Back home, eat',      note: 'Usually rice. We\'re Nepali.' },
-  { time: '2–4 PM',     emoji: '📖', label: 'Studies',             note: 'Academic work, exam prep, staying on top of subjects.' },
-  { time: '4–6 PM',     emoji: '💻', label: 'Deep work block',     note: 'Building, reading, writing code. No social media.' },
-  { time: '6–7 PM',     emoji: '🧠', label: 'Learning',            note: 'AI/ML concepts, math, random Wikipedia spirals.' },
-  { time: '7 PM',       emoji: '🍽️', label: 'Dinner + family',     note: 'Actual human interaction.' },
-  { time: '8–11 PM',    emoji: '🎵', label: 'Music + wind down',   note: 'Sometimes journaling. Mostly overthinking.' },
+  {
+    time: '5:30 AM',
+    emoji: '🏋️',
+    label: 'Gym',
+    note: 'Non-negotiable. Out the door at 5:30, no excuses.',
+  },
+  {
+    time: '7:30 AM',
+    emoji: '🏠',
+    label: 'Back home — fuel up',
+    note: 'High-protein shake + 2 eggs. Every single morning. The drink is always the same.',
+    expandable: 'drink',
+  },
+  {
+    time: '10:30 AM',
+    emoji: '🎓',
+    label: 'College',
+    note: 'Hetauda School of Management. Science stream. Till 5:30 PM.',
+  },
+  {
+    time: '5:30–6:30 PM',
+    emoji: '🍱',
+    label: 'Khaja time',
+    note: 'Random snacks after college. Nothing consistent except it happens every day.',
+  },
+  {
+    time: '6:30–7 PM',
+    emoji: '📱',
+    label: 'Mobile + reels',
+    note: 'Decompress. Scroll. Exist. Not proud of it but it\'s real.',
+  },
+  {
+    time: '7–8:30 PM',
+    emoji: '📖',
+    label: 'Homework',
+    note: 'Complete whatever the teachers assigned. Get it done.',
+  },
+  {
+    time: '8–9 PM',
+    emoji: '🍽️',
+    label: 'Dinner + mobile',
+    note: 'Eat, reply to messages, exist with family.',
+  },
+  {
+    time: '9–10:30 PM',
+    emoji: '💻',
+    label: 'Learning block',
+    note: 'This is where I actually learn things — not school things. Real things.',
+    link: '/learning',
+  },
+  {
+    time: '11 PM–12 AM',
+    emoji: '🧪',
+    label: 'Physics or Chemistry',
+    note: 'Late night study. Usually one of these two subjects. Brain works better at night.',
+  },
+  {
+    time: '1–1:30 AM',
+    emoji: '😴',
+    label: 'Sleep',
+    note: 'Before sleeping: scrolling, replying to messages, or just playing games. Then crash.',
+  },
 ];
 
 export default function About() {
+  const [drinkOpen, setDrinkOpen] = useState(false);
+
   return (
     <PageWrapper>
       <div className="max-w-2xl mx-auto py-8 space-y-16">
@@ -171,20 +236,63 @@ export default function About() {
         <motion.section {...fade(0.18)}>
           <h2 className="text-sm font-bold uppercase tracking-widest text-muted-foreground mb-5">A typical day</h2>
           <div className="relative">
-            {/* vertical line */}
             <div className="absolute left-[22px] top-2 bottom-2 w-px bg-border" />
             <div className="space-y-1">
-              {timeline.map(({ time, emoji, label, note }) => (
-                <div key={time} className="flex items-start gap-4 pl-1">
+              {timeline.map((item) => (
+                <div key={item.time} className="flex items-start gap-4 pl-1">
                   <div className="w-11 h-11 rounded-full bg-card border border-border flex items-center justify-center text-lg shrink-0 relative z-10">
-                    {emoji}
+                    {item.emoji}
                   </div>
                   <div className="flex-1 pb-5 pt-1.5">
                     <div className="flex items-baseline gap-2 flex-wrap">
-                      <span className="font-semibold text-sm text-foreground">{label}</span>
-                      <span className="text-[10px] font-mono text-muted-foreground/60 uppercase">{time}</span>
+                      <span className="font-semibold text-sm text-foreground">{item.label}</span>
+                      <span className="text-[10px] font-mono text-muted-foreground/60 uppercase">{item.time}</span>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{note}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{item.note}</p>
+
+                    {/* Drink ingredients dropdown */}
+                    {item.expandable === 'drink' && (
+                      <div className="mt-2">
+                        <button
+                          onClick={() => setDrinkOpen(o => !o)}
+                          className="flex items-center gap-1.5 text-[11px] font-semibold text-primary hover:underline"
+                        >
+                          <ChevronDown className={`w-3.5 h-3.5 transition-transform ${drinkOpen ? 'rotate-180' : ''}`} />
+                          {drinkOpen ? 'Hide ingredients' : "What's in the drink?"}
+                        </button>
+                        <AnimatePresence>
+                          {drinkOpen && (
+                            <motion.div
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: 'auto' }}
+                              exit={{ opacity: 0, height: 0 }}
+                              transition={{ duration: 0.2 }}
+                              className="overflow-hidden"
+                            >
+                              <div className="mt-2 flex flex-wrap gap-2">
+                                {drinkIngredients.map(({ emoji, name }) => (
+                                  <span
+                                    key={name}
+                                    className="inline-flex items-center gap-1.5 bg-primary/5 border border-primary/15 text-foreground px-2.5 py-1 rounded-lg text-xs font-medium"
+                                  >
+                                    {emoji} {name}
+                                  </span>
+                                ))}
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    )}
+
+                    {/* Link to learning page */}
+                    {item.link && (
+                      <Link href={item.link}>
+                        <span className="inline-flex items-center gap-1 mt-1.5 text-[11px] font-semibold text-primary hover:underline cursor-pointer">
+                          See what I'm learning →
+                        </span>
+                      </Link>
+                    )}
                   </div>
                 </div>
               ))}
