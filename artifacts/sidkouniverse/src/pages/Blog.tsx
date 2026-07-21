@@ -111,7 +111,7 @@ export default function Blog() {
         </motion.div>
 
         {/* Category filter pills */}
-        {!loading && categories.length > 1 && (
+        {!loading && posts.length > 0 && (
           <div className="flex gap-2 flex-wrap mb-8">
             {categories.map(cat => (
               <button
